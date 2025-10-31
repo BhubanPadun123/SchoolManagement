@@ -1,0 +1,9 @@
+.outlet__root::-webkit-scrollbar{
+    display: none;
+}
+.outlet__root{
+    height: 90vh;
+    padding: 10px;
+    overflow-y: auto;
+    width: 100%;
+}

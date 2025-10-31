@@ -1,0 +1,36 @@
+.show-grid {
+    padding: 10px;
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+.service__items{
+    max-width: 30%;
+    min-width: 300px;
+    border: 1px desh #000;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    background-color: rgb(163, 188, 209);
+}
+.service__items:hover {
+    background-color: gainsboro;
+    opacity: 0.5;
+    cursor: pointer;
+    z-index: 99;
+    box-shadow: #000;
+}
+.service__list_container{
+    height: 140px;
+    overflow-y: scroll;
+    width: 100%;
+}
+.service__list_container::-webkit-scrollbar{
+    scrollbar-width: thin;
+}
