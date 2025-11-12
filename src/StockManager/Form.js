@@ -22,6 +22,10 @@ import {
     Loader,
     ToastMessage
 } from "../components/index"
+import {
+    useMediaQuery,
+    useTheme
+} from "@mui/material"
 
 const { StringType } = Schema.Types;
 
@@ -57,7 +61,9 @@ const FormAdmission = ({
     classes,
     institution_ref
 }) => {
-    const formRef = React.useRef();
+    const formRef = React.useRef()
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const [formError, setFormError] = React.useState({});
     const [formValue, setFormValue] = React.useState({
         firstname: '',
@@ -129,18 +135,18 @@ const FormAdmission = ({
                 display: 'flex',
                 justifyContent: 'center',
                 padding: '20px',
-                width: '100%'
+                alignItems:"center"
             }}
         >
             <Panel
                 bordered
                 shaded
                 style={{
-                    width: '100%',
                     maxWidth: 900,
                     backgroundColor: '#a18686ff',
                     borderRadius: 10,
-                    padding: 20
+                    padding: 20,
+                    width:isMobile ? "auto" : 999
                 }}
             >
                 <Header style={{

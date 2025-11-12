@@ -1,10 +1,12 @@
 import StackLayer from "./StackLayer"
-import AdminCardTemplates from "./AdminCardTemplates"
 import PlatformSetup from "./Plarform"
+import CreateRegistrationLink from "./RegistrationLink"
+import CreateLink from "./components/CreateLink"
 
 
 export {
     StackLayer,
-    AdminCardTemplates,
-    PlatformSetup
+    PlatformSetup,
+    CreateRegistrationLink,
+    CreateLink
 }

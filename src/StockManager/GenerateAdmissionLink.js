@@ -45,11 +45,15 @@ import {
     Danger,
     AddOutline
 } from "@rsuite/icons"
+import {useParams} from "react-router-dom"
+
+
 const { Cell, Column, HeaderCell } = Table
 
 
 function CreateAdmissionLink() {
     const navigation = useNavigate()
+    const {class_name} = useParams()
     const [form, setForm] = useState({
         title: "",
         expired: "",
@@ -117,6 +121,7 @@ function CreateAdmissionLink() {
         }
     }, [getUserRolesState])
 
+
     useEffect(() => {
         if (rolesList) {
             setUser((prevState) => ({ ...prevState, roles: rolesList }))
@@ -179,10 +184,12 @@ function CreateAdmissionLink() {
 
     function createLink() {
         const user = GetCurrentUser()
-        if (!form.title || !form.expired || !user || !form.class_ref) {
+        let classRef = Array.isArray(classList) && classList.length > 0 && classList.find((item)=> item.class_name === class_name)
+        if (!form.title || !form.expired || !user || !classRef) {
             toaster.push(<Message type="warning" >All fields are mandatory!</Message>, { placement: "topCenter" })
             return
         }
+        console.log("hellllo--->",classRef)
         const {
             meta_data
         } = user
@@ -194,7 +201,7 @@ function CreateAdmissionLink() {
                 title: form.title,
                 expired: isoDate,
                 institution_ref: meta_data.user_platform,
-                class_ref: form.class_ref
+                class_ref: classRef.id
             }
             createLinkAction({
                 ...data
@@ -410,36 +417,6 @@ function CreateAdmissionLink() {
                                 setForm((prevState) => ({ ...prevState, expired: e }))
                             }}
                         />
-                    </div>
-                    <div style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4
-                    }}>
-                        <Text style={{
-                            fontSize: 14,
-                            color: "#5e5151ff",
-                            fontFamily: "Lato",
-                            fontWeight: 400
-                        }}>Select the class for create link</Text>
-                        <RadioGroup
-                            onChange={(e) => setForm((prevState) => ({ ...prevState, class_ref: e }))}
-                            value={form.class_ref}
-                            style={{
-                                maxHeight: 120,
-                                overflowY: 'scroll',
-                                "scrollbarWidth": "thin"
-                            }}
-                        >
-                            {
-                                Array.isArray(classList) && classList.length > 0 &&
-                                classList.map((item, index) => (
-                                    <Radio title={item.class_name} value={item.id} key={index} color="yellow">
-                                        {item.class_name}
-                                    </Radio>
-                                ))
-                            }
-                        </RadioGroup>
                     </div>
                     <Divider />
                     <div style={{

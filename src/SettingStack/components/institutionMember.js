@@ -23,14 +23,19 @@ import EditIcon from "@rsuite/icons/Edit"
 import TrashIcon from "@rsuite/icons/Trash"
 import {
     Loader,
-    ToastMessage
+    ToastMessage,
+    ConfirmationAlert
 } from "../../components/index"
 import {
     useCreatePlatformRolesMutation,
     useLazyGetPlatformRolesQuery,
     useCreatePlatformUserMutation,
-    useLazyGetPlatformUserListQuery
+    useLazyGetPlatformUserListQuery,
+    useUpdateInstitutionMetadataMutation,
+    useUpdateUserMetadataMutation,
+    useDeleteUserFromInstitutionMutation
 } from "../../Redux/actions/setting.action"
+import _ from "lodash"
 
 const { Column, HeaderCell, Cell } = Table
 
@@ -39,9 +44,11 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
     const [getRolesAction, getRolesState] = useLazyGetPlatformRolesQuery()
     const [createUserAction, createUserState] = useCreatePlatformUserMutation()
     const [getUserListAction, getUserListState] = useLazyGetPlatformUserListQuery()
+    const [updateUserMetadataAction, updateUserMetadataState] = useUpdateUserMetadataMutation()
+    const [deleteUserAction, deleteUserState] = useDeleteUserFromInstitutionMutation()
 
     const [status, setStatus] = useState(null)
-    const [members, setMembers] = useState([])
+    const [selectedUserId, setSelectedUserId] = useState(null)
 
     const [open, setOpen] = useState(false)
     const [openRoleModal, setOpenRoleModal] = useState(false)
@@ -56,6 +63,11 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
     const [roleForm, setRoleForm] = useState({
         designation: "",
         privileges: []
+    })
+    const [alert, setAlert] = useState({
+        open: false,
+        message: "",
+        title: ""
     })
 
     useEffect(() => {
@@ -115,7 +127,7 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
             return []
         }
     }, [getUserListState])
-    console.log(platformUserListStatus)
+
 
     const privilegesList = [
         "Add Member",
@@ -143,12 +155,16 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
     }
 
     const handleDelete = (id) => {
-        setMembers(members.filter((m) => m.id !== id));
-        toaster.push(<Message type="info">Member deleted</Message>, { placement: "topCenter" });
-    };
+        setSelectedUserId(id)
+        setAlert({
+            open: true,
+            title: "Delete confirmation",
+            message: "Are you sure? do you want to delete user?"
+        })
+    }
 
     const handleSubmit = () => {
-        if (!formValue.firstname || !formValue.email || !formValue.designation || !formValue.password) {
+        if (!formValue.firstname || !formValue.email || !formValue.designation) {
             toaster.push(<Message type="info">All fields are required</Message>, { placement: "topCenter" })
             return
         }
@@ -158,7 +174,7 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
             firstname: formValue.firstname,
             lastname: formValue.lastname,
             email: formValue.email,
-            password: formValue.password,
+            password: `${formValue.firstname}@12345`,
             meta_data: {
                 "designation": formValue.designation,
                 "user_platform": institutionBasicInfo?.id
@@ -198,25 +214,109 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                 platform_id && getUserListAction({ platform_id })
             }
             return {
-                show:true,
-                message:createUserState.data?.message,
-                type:"success"
+                show: true,
+                message: createUserState.data?.message,
+                type: "success"
             }
         }
-        if(createUserState.isError){
+        if (createUserState.isError) {
             return {
-                show:true,
-                message:createUserState.error.data?.detail,
-                type:"error"
+                show: true,
+                message: createUserState.error.data?.detail,
+                type: "error"
             }
         }
     }, [createUserState])
 
-    useEffect(()=> {
-        if(userAddToPlatformStatus){
+    useEffect(() => {
+        if (userAddToPlatformStatus) {
             setStatus(userAddToPlatformStatus)
         }
-    },[userAddToPlatformStatus])
+    }, [userAddToPlatformStatus])
+
+    function updateUserMetadata() {
+        if (!editingMember) {
+            toaster.push(<Message type="info" >User info missing</Message>, { placement: "topCenter" })
+            return
+        }
+
+        const meta_data = {
+            ...editingMember.meta_data,
+            "designation": formValue.designation
+        }
+        let data = {
+            ...editingMember,
+            meta_data: meta_data
+        }
+        updateUserMetadataAction({
+            userRef: data.id,
+            userInfo: data
+        })
+    }
+
+    const updateUserMetadataStatus = useMemo(() => {
+        if (updateUserMetadataState.isSuccess) {
+            let status = _.get(updateUserMetadataState, "data.message", "")
+            setEditingMember(null)
+            setOpen(false)
+            if (institutionBasicInfo) {
+                const platform_id = institutionBasicInfo.id
+                platform_id && getRolesAction({ platform_id })
+                platform_id && getUserListAction({ platform_id })
+            }
+            return {
+                show: true,
+                message: status,
+                type: "success"
+            }
+        }
+        if (updateUserMetadataState.isError) {
+            return {
+                show: true,
+                message: "Error while update the user metadata!",
+                type: "error"
+            }
+        }
+    }, [updateUserMetadataState])
+    useEffect(() => {
+        if (updateUserMetadataStatus) {
+            setStatus(updateUserMetadataStatus)
+        }
+    }, [updateUserMetadataStatus])
+
+    const deleteUserStatus = useMemo(() => {
+        if (deleteUserState.isSuccess) {
+            if (institutionBasicInfo) {
+                const platform_id = institutionBasicInfo.id
+                platform_id && getRolesAction({ platform_id })
+                platform_id && getUserListAction({ platform_id })
+            }
+            setSelectedUserId(null)
+            setAlert({
+                open: false,
+                title: "",
+                message: ""
+            })
+            return {
+                show: true,
+                message: "User deleted success!",
+                type: "success"
+            }
+        }
+        if (deleteUserState.isError) {
+            return {
+                show: true,
+                message: "Error while delete the user!",
+                type: "error"
+            }
+        }
+    }, [deleteUserState])
+
+    useEffect(()=>{
+        if(deleteUserStatus){
+            setStatus(deleteUserStatus)
+        }
+    },[deleteUserStatus])
 
     return (
         <div
@@ -343,15 +443,10 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                                     ))}
                             </RadioGroup>
                         </Form.Group>
-
-                        <Form.Group controlId="password">
-                            <Form.ControlLabel>Enter password</Form.ControlLabel>
-                            <Form.Control name="password" placeholder="Enter Password" />
-                        </Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={handleSubmit} appearance="primary">
+                    <Button onClick={editingMember ? updateUserMetadata : handleSubmit} appearance="primary">
                         {editingMember ? "Update" : "Add"}
                     </Button>
                     <Button onClick={() => setOpen(false)} appearance="subtle">
@@ -406,7 +501,9 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                     getRolesState.isLoading ||
                     createRoleState.isLoading ||
                     createUserState.isLoading ||
-                    getUserListState.isLoading
+                    getUserListState.isLoading ||
+                    updateUserMetadataState.isLoading ||
+                    deleteUserState.isLoading
                 ) && (
                     <Loader show={true} />
                 )
@@ -421,8 +518,29 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                     />
                 )
             }
+            {
+                alert.open && (
+                    <ConfirmationAlert
+                        {...alert}
+                        onConfirm={() => {
+                            if (selectedUserId) {
+                                deleteUserAction({
+                                    user_ref: selectedUserId
+                                })
+                            }
+                        }}
+                        onCancel={() => {
+                            setAlert({
+                                open: false,
+                                title: "",
+                                message: ""
+                            })
+                        }}
+                    />
+                )
+            }
         </div>
     );
 }
 
-export default InstitutionMembers;
+export default InstitutionMembers

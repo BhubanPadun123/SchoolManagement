@@ -75,7 +75,6 @@ export default function AdmitRoot() {
     }, [listMemo])
 
     function handleNav(to) {
-        console.log(to)
         navigate(to)
     }
 
@@ -88,7 +87,7 @@ export default function AdmitRoot() {
             <div style={{
                 display: "flex",
                 flexDirection: isMobile ? "column" : "row",
-                justifyContent: "center",
+                justifyContent: "flex-start",
                 alignItems: "center",
                 gap: 10
             }}>

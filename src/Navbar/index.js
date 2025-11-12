@@ -9,11 +9,13 @@ import {
     Container,
     Button,
     MenuItem,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useNavigate } from "react-router-dom"; // ✅ for navigation (React Router)
+} from "@mui/material"
+import MenuIcon from "@mui/icons-material/Menu"
+import { useTheme } from "@mui/material/styles"
+import useMediaQuery from "@mui/material/useMediaQuery"
+import { useNavigate,useLocation } from "react-router-dom"
+import {GetCurrentUser} from "../utils/hooks"
+import {AddOutline, Admin} from "@rsuite/icons"
 
 const routesList = [
     { name: "Home", path: "/" },
@@ -22,26 +24,46 @@ const routesList = [
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
     { name: "Login", path: "/auth" },
-];
+]
+const publicRoutes = [
+    {name:"Home",path:"/"},
+    {name:"Services",path:"/service"},
+    {name:"Login",path:"/auth"}
+]
 
 const ResponsiveHeader= () => {
+    const path = useLocation()
     const [anchorElNav, setAnchorElNav] = React.useState(null)
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const navigate = useNavigate()
+    const [user,setUser] = React.useState(null)
+
+    React.useEffect(function(){
+        fetchUserData()
+    },[path?.pathname])
+
+    function fetchUserData(){
+        const user = GetCurrentUser()
+        if(!user){
+            setUser(null)
+        }else{
+            setUser(user)
+        }
+    }
 
     const handleOpenNavMenu = (event) => {
-        setAnchorElNav(event.currentTarget);
-    };
+        setAnchorElNav(event.currentTarget)
+    }
 
     const handleCloseNavMenu = () => {
-        setAnchorElNav(null);
-    };
+        setAnchorElNav(null)
+    }
 
     const handleNavigate = (path) => {
         navigate(path)
         handleCloseNavMenu()
-    };
+    }
 
     return (
         <AppBar position="static" sx={{ backgroundColor: "#1976d2" }}>
@@ -83,7 +105,7 @@ const ResponsiveHeader= () => {
                                 transformOrigin={{ vertical: "top", horizontal: "left" }}
                                 sx={{ display: { xs: "block", md: "none" } }}
                             >
-                                {routesList.map((route) => (
+                                {(user ? routesList : publicRoutes).map((route) => (
                                     <MenuItem key={route.name} onClick={() => handleNavigate(route.path)}>
                                         <Typography textAlign="center">{route.name}</Typography>
                                     </MenuItem>
@@ -117,11 +139,20 @@ const ResponsiveHeader= () => {
                             justifyContent: "flex-end",
                         }}
                     >
-                        {routesList.map((route) => (
+                        {(user ? routesList : publicRoutes).map((route) => (
                             <Button
                                 key={route.name}
                                 onClick={() => handleNavigate(route.path)}
-                                sx={{ my: 2, color: "white", display: "block" }}
+                                sx={{ 
+                                    my: 2, 
+                                    color: "white", 
+                                    display: route.path.includes("auth") ? "flex" : "block",
+                                    border: route.path.includes("auth") && "2px solid #FFFF", 
+                                    justifyContent:"center",
+                                    alignItems:"center"
+                                }}
+                                variant="outlined"
+                                endIcon={route.path.includes("auth") && <Admin/>}
                             >
                                 {route.name}
                             </Button>

@@ -37,6 +37,12 @@ export const userActions = createApi({
                 url:`${api_service_path.user}/privilages/${designation}/${platform_id}`,
                 method:"GET"
             })
+        }),
+        checkUserPlatform:builder.query({
+            query:({user_email})=> ({
+                url:`/check_user_platform/${user_email}`,
+                method:"GET"
+            })
         })
     })
 })
@@ -45,5 +51,6 @@ export const {
     usePrefetch,
     useUserRegisterMutation,
     useUserLoginMutation,
-    useLazyGetUserPrivilegesQuery
+    useLazyGetUserPrivilegesQuery,
+    useLazyCheckUserPlatformQuery
 } = userActions

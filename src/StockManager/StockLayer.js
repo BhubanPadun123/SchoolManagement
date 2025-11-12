@@ -1,12 +1,8 @@
 import React, { useState } from "react"
 import {
     Container,
-    Header,
     Content,
-    Sidebar,
     Nav,
-    Text,
-    Divider,
     Sidenav
 } from "rsuite"
 import {
@@ -14,7 +10,9 @@ import {
     Drawer,
     IconButton,
     Tooltip,
-    Box
+    Box,
+    Typography,
+    Button
 } from "@mui/material"
 import { Outlet, useNavigate } from "react-router-dom"
 import "rsuite/dist/rsuite.min.css"
@@ -27,8 +25,14 @@ import { Loader } from "../components/index"
 import { useSelector } from "react-redux"
 import { useTheme } from "@mui/material/styles"
 import {
-    Menu
+    Menu,
+    School,
+    Add
 } from "@mui/icons-material"
+import _ from "lodash"
+import {
+    Sidebar
+} from "../components/index"
 
 export default function StockLayout() {
     const theme = useTheme()
@@ -61,9 +65,24 @@ export default function StockLayout() {
         const queries = state.classRoomApi?.queries || {};
         const queryKey = Object.keys(queries).find(key =>
             key.startsWith("getInstitutionClasses")
-        );
-        const currentQuery = queries[queryKey];
-        return currentQuery?.data?.list || [];
+        )
+        const currentQuery = queries[queryKey]
+        if (currentQuery) {
+            let list = _.get(currentQuery, "data.list", [])
+            if (Array.isArray(list) && list.length > 0) {
+                const navList = list.map((item, index) => {
+                    return {
+                        name: item.class_name,
+                        to: item.class_name,
+                        icon: <School />
+                    }
+                })
+                return navList
+            } else {
+                return []
+            }
+        }
+        return currentQuery?.data?.list || []
     })
 
     const institutionClassesStatus = React.useMemo(() => {
@@ -77,103 +96,47 @@ export default function StockLayout() {
         }
     }, [getClassState])
 
-    function SubNavList() {
-        return (
-            <Box
-                sx={{
-                    width: 250
-                }}
-                role={"presentation"}
-                onClick={() => setOpenDrawer(false)}
-                onKeyDown={() => setOpenDrawer(false)}
-            >
-                <Sidenav expanded={true} defaultOpenKeys={['3', '4']}>
-                    <Sidenav.Body>
-                        <Nav>
-                            <Nav.Item eventKey={"new_class"} onClick={() => navigate("/stock/add")} icon={<Tools />}>
-                                Create New Class
-                            </Nav.Item>
-                            {
-                                Array.isArray(classRoomData) && classRoomData.length > 0 && classRoomData.map((item, index) => {
-                                    return (
-                                        <Nav.Item eventKey={index} key={index} onClick={() => navigate(`/stock/${item.class_name}`)} icon={<Tools />} >
-                                            {item.class_name}
-                                        </Nav.Item>
-                                    )
-                                })
-                            }
-                        </Nav>
-                    </Sidenav.Body>
-                </Sidenav>
-            </Box>
-        )
-    }
-
     return (
         <Container style={{
             display: "flex",
-            flexDirection: isMobile ? "column" : "row"
+            flexDirection: "column"
         }}>
-            {
-                !isMobile ? (
-                    <Container
-                        style={{
-                            width: 180,
-                            position: "sticky",
-                            height: "90vh",
-                            overflowY: "scroll",
-                            scrollbarWidth: "thin"
-                        }}
-                    >
-                        {/* Sidebar Navigation */}
-                        <Sidenav expanded={true} defaultOpenKeys={['3', '4']}>
-                            <Sidenav.Body>
-                                <Nav>
-                                    <Nav.Item eventKey={"new_class"} onClick={() => navigate("/stock/add")} icon={<Tools />}>
-                                        Create New Class
-                                    </Nav.Item>
-                                    {
-                                        Array.isArray(classRoomData) && classRoomData.length > 0 && classRoomData.map((item, index) => {
-                                            return (
-                                                <Nav.Item eventKey={index} key={index} onClick={() => navigate(`/stock/${item.class_name}`)} icon={<Tools />} >
-                                                    {item.class_name}
-                                                </Nav.Item>
-                                            )
-                                        })
-                                    }
-                                </Nav>
-                            </Sidenav.Body>
-                        </Sidenav>
-                    </Container>
-                ) : (
-                    <div style={{
-                        minHeight: "20px",
-                        width: "100%",
-                        background: "white",
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        alignItems: "center"
-                    }}>
-                        <Tooltip title={"Show More"} placement="bottom" arrow>
-                            <IconButton onClick={() => setOpenDrawer(!isOpenDrawer)}>
-                                <Menu />
-                            </IconButton>
-                        </Tooltip>
-                        <Drawer
-                            anchor="right"
-                            open={isOpenDrawer}
-                            onClose={() => setOpenDrawer(false)}
-                        >
-                            <SubNavList />
-                        </Drawer>
-                    </div>
-                )
-            }
+            <div style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center"
+            }}>
+                <Typography variant="h4" style={{
+                    fontWeight: 400,
+                    fontFamily: "Lato",
+                    fontStyle: "normal",
+                    color: "#FFFF",
+                    padding: 2
+                }}>
+                    Manage Class Admission
+                </Typography>
+                <Sidebar
+                    navList={classRoomData}
+                    headerTitle={"Institution Classes"}
+                    handleNav={(e) => {
+                        navigate(e)
+                    }}
+                    defaultNav={[
+                        {
+                            name:"Create New Class",
+                            to:"add",
+                            icon:<Add/>
+                        }
+                    ]}
+                />
+            </div>
             <Content style={{
-                height: "90vh",
+                height: "80vh",
                 overflowY: "scroll",
-                width: isMobile ? "100%" : "80%",
-                "scrollbarWidth": "none"
+                width: "100%",
+                "scrollbarWidth": "none",
+                justifyContent:"center",
+                alignItems:"center"
             }}>
                 <Outlet />
             </Content>

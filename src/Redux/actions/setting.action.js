@@ -113,6 +113,19 @@ export const settingAction = createApi({
                 url:`/platform_users/${platform_id}`,
                 method:"GET"
             })
+        }),
+        updateUserMetadata:builder.mutation({
+            query:({userRef,userInfo})=> ({
+                url:`/update_user_metadata/${userRef}`,
+                method:"PUT",
+                body:userInfo
+            })
+        }),
+        deleteUserFromInstitution:builder.mutation({
+            query:({user_ref})=> ({
+                url:`/delete_platfrom_user/${user_ref}`,
+                method:"DELETE"
+            })
         })
     })
 })
@@ -133,5 +146,7 @@ export const {
     useGetPlatformRolesQuery,
     useCreatePlatformUserMutation,
     useLazyGetPlatformUserListQuery,
-    useGetPlatformUserListQuery
+    useGetPlatformUserListQuery,
+    useUpdateUserMetadataMutation,
+    useDeleteUserFromInstitutionMutation
 } = settingAction

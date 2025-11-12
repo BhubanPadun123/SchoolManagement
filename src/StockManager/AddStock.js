@@ -28,6 +28,9 @@ import { Loader, ToastMessage, ConfirmationAlert } from "../components/index"
 import {
     GetCurrentUser
 } from "../utils/hooks"
+import {
+    CTable
+} from "../components/index"
 
 function AddStock() {
     const [user, setUser] = React.useState(null)
@@ -48,6 +51,7 @@ function AddStock() {
         message: "",
         class_id: ""
     })
+    const [classList,setClassList] = React.useState([])
     const [openModal, setModal] = React.useState(false)
 
     const [getClassesAction, getClassState] = useLazyGetInstitutionClassesQuery()
@@ -86,6 +90,23 @@ function AddStock() {
             return []
         }
     }, [getClassState])
+
+    React.useEffect(()=>{
+        if(Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0){
+            const list = institutionClassesStatus.map((item,index)=> {
+                return {
+                    "SL_No":index+1,
+                    "Class Name":item.class_name,
+                    "Registered":0,
+                    "Admitted":0,
+                    "Actions":""
+                }
+            })
+            setClassList(list)
+        }else{
+            setClassList([])
+        }
+    },[institutionClassesStatus])
 
 
     function handleCreateClass() {
@@ -285,7 +306,11 @@ function AddStock() {
                         Create New Class
                     </Button>
                 </div>
-                {
+                <CTable
+                   header={["SL_No","Class Name","Registered","Admitted","Actions"]}
+                   rows={classList}
+                />
+                {/* {
                     institutionClassesStatus && Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0 && (
                         <React.Fragment>
                             <Divider />
@@ -328,7 +353,7 @@ function AddStock() {
                             </List>
                         </React.Fragment>
                     )
-                }
+                } */}
             </Container>
             <Modal open={openModal}>
                 <div>

@@ -271,8 +271,6 @@ function PlatformSetup() {
     const handleCreatePlatform = () => {
         const data = institution
 
-        console.log(data)
-
         const isNullPresent = Object.entries(data).find((item) => !item[1])
 
 
@@ -443,6 +441,10 @@ function PlatformSetup() {
         }
     },[uploadImageStatus])
 
+    console.log({
+        institution
+    })
+
     return (
         <div className="sub__container">
             <Tabs defaultActiveKey={state.setup_step} appearance="pills" style={{
@@ -503,14 +505,27 @@ function PlatformSetup() {
 
                         <div className="form__group" style={{ marginBottom: 15 }}>
                             <Text style={{ color: "#FFF", fontSize: 14 }}>Upload Institute Logo</Text>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    const file = e.target.files[0]
-                                    uploadImageAction({ file })
-                                }}
-                            />
+                            {
+                                institution.logo ? (
+                                    <img
+                                        style={{
+                                            height: "140px",
+                                            width: "140px",
+                                            borderRadius:"8px"
+                                        }}
+                                        src={JSON.parse(institution.logo).url}
+                                    />
+                                ) : (
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0]
+                                            uploadImageAction({ file })
+                                        }}
+                                    />
+                                )
+                            }
                         </div>
 
                         <div className="form__group" style={{ marginBottom: 15 }}>

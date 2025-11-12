@@ -1,58 +1,84 @@
-import React from 'react'
-import { Sidenav, Nav, Toggle } from 'rsuite'
-import DashboardIcon from '@rsuite/icons/legacy/Dashboard'
-import GroupIcon from '@rsuite/icons/legacy/Group'
-import MagicIcon from '@rsuite/icons/legacy/Magic'
-import GearCircleIcon from '@rsuite/icons/legacy/GearCircle'
-import { Outlet,useNavigate } from 'react-router-dom'
-import {
-    Admin,
-    Model
-} from "@rsuite/icons"
+import React,{
+    useEffect
+} from 'react'
+
+import { Outlet, useNavigate } from 'react-router-dom'
 import "./root.css"
+import {
+    Sidebar
+} from "../components/index"
+import { Typography } from '@mui/material'
+import {
+    Fingerprint,
+    School,
+    Attractions,
+    AddLinkOutlined
+} from "@mui/icons-material"
 
 const StackLayer = () => {
     const navigate = useNavigate()
-    const [expanded, setExpanded] = React.useState(true)
-    const [activeKey, setActiveKey] = React.useState('1')
+    
+
+    useEffect(()=>{
+        const fetchUserData=()=>{
+            navigate("platform")
+        }
+        fetchUserData()
+    },[])
+
     return (
         <div style={{
-            display:"flex",
-            flexDirection:"row",
-            position:"relative",
-            width:"100%"
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            width: "100%"
         }}>
-            <div style={{ width: 240,position:"sticky" }}>
-                <Sidenav expanded={expanded} defaultOpenKeys={['3', '4']}>
-                    <Sidenav.Body>
-                        <Nav activeKey={activeKey} onSelect={setActiveKey}>
-                            <Nav.Item eventKey="2" icon={<Model />} onClick={()=> navigate("/setting/platform")}  >
-                                Institution Setup
-                            </Nav.Item>
-                            <Nav.Item eventKey="1" icon={<Admin />} onClick={()=> navigate("/setting/admit")} >
-                                Admin Card Template
-                            </Nav.Item>
-                            <Nav.Menu
-                                placement="rightStart"
-                                eventKey="4"
-                                title="Settings"
-                                icon={<GearCircleIcon />}
-                            >
-                                <Nav.Item eventKey="4-1">Applications</Nav.Item>
-                                <Nav.Item eventKey="4-2">Channels</Nav.Item>
-                                <Nav.Item eventKey="4-3">Versions</Nav.Item>
-                                <Nav.Menu eventKey="4-5" title="Custom Action">
-                                    <Nav.Item eventKey="4-5-1">Action Name</Nav.Item>
-                                    <Nav.Item eventKey="4-5-2">Action Params</Nav.Item>
-                                </Nav.Menu>
-                            </Nav.Menu>
-                        </Nav>
-                    </Sidenav.Body>
-                    <Sidenav.Toggle onToggle={expanded => setExpanded(expanded)} />
-                </Sidenav>
+            <div style={{ 
+                display:"flex",
+                flexDirection:"row",
+                gap:8,
+                alignItems:"center",
+                padding:4
+             }}>
+                <Typography
+                    variant='h4'
+                    style={{
+                        fontFamily: "Lato",
+                        fontWeight: 400,
+                        fontStyle: "normal",
+                        color: "#FFFF"
+                    }}
+                >
+                    Institution Setup
+                </Typography>
+                <Sidebar
+                    headerTitle={"Institution Setting"}
+                    defaultNav={[
+                        {
+                            name: "Create New Institution",
+                            to: "platform",
+                            icon: <School />
+                        }
+                    ]}
+                    navList={[
+                        {
+                            name:"Create Registration Link",
+                            to:"student_registration",
+                            icon:<AddLinkOutlined/>
+                        },
+                        {
+                            name:"Manage Employees",
+                            to:"employees",
+                            icon:<Attractions/>
+                        }
+                    ]}
+                    handleNav={(e)=> {
+                        navigate(e)
+                    }}
+                />
             </div>
             <div className='outlet__root'>
-                <Outlet/>
+                <Outlet />
             </div>
         </div>
     )

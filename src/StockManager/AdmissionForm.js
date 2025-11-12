@@ -198,7 +198,7 @@ function AdmissionForm() {
                 justifyContent:"center",
                 paddingTop:4,
                 paddingBottom:4,
-                margin:8
+                margin:8,
             }}>
                 <Tabs
                     defaultActiveKey={operation}
@@ -214,7 +214,10 @@ function AdmissionForm() {
                 </Tabs>
             </div>
             <div style={{
-                width: "100%"
+                width: "100%",
+                display:"flex",
+                justifyContent:"center",
+                alignItems:"center"
             }}>
                 {
                     operation === "new_admission" && (

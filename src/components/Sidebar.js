@@ -28,11 +28,12 @@ const Sidebar = ({
     handleNav,
     defaultNav = []
 }) => {
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(false)
+    const [active, setActive] = useState(defaultNav.length > 0 ? defaultNav[0].name : "")
 
     const toggleDrawer = () => {
-        setOpen(!open);
-    };
+        setOpen(!open)
+    }
 
     const drawerContent = (
         <Box sx={{ width: 250 }}>
@@ -49,7 +50,18 @@ const Sidebar = ({
                             defaultNav.length > 0 && (
                                 defaultNav.map((item, index) => {
                                     return (
-                                        <ListItem disablePadding key={index} onClick={() => handleNav(item.to)} >
+                                        <ListItem
+                                            disablePadding
+                                            key={index}
+                                            onClick={() => {
+                                                setOpen(!open)
+                                                handleNav(item.to)
+                                                setActive(item.name)
+                                            }}
+                                            sx={{
+                                                background: item.name === active && "gray"
+                                            }}
+                                        >
                                             <ListItemButton>
                                                 <ListItemIcon>
                                                     {item.icon}
@@ -64,7 +76,18 @@ const Sidebar = ({
                         {
                             navList.map((item, index) => {
                                 return (
-                                    <ListItem disablePadding key={index} onClick={() => handleNav(item.to)} >
+                                    <ListItem
+                                        disablePadding
+                                        key={index}
+                                        onClick={() => {
+                                            setOpen(!open)
+                                            handleNav(item.to)
+                                            setActive(item.name)
+                                        }}
+                                        sx={{
+                                            background: item.name === active && "gray"
+                                        }}
+                                    >
                                         <ListItemButton>
                                             <ListItemIcon>
                                                 {item.icon}
