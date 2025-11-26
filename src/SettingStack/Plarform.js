@@ -441,9 +441,6 @@ function PlatformSetup() {
         }
     },[uploadImageStatus])
 
-    console.log({
-        institution
-    })
 
     return (
         <div className="sub__container">
@@ -729,7 +726,7 @@ function PlatformSetup() {
                 state.setup_step === "member_institution" && (
                     <InstitutionMembers
                         institutionBasicInfo={institutionBasicInfo}
-                        institutionMetadata={institutionMetadata}
+                        institutionMetadata={metaDataStatus}
                         user={user}
                     />
                 )

@@ -3,21 +3,26 @@ import {
     Form,
     Button,
     Container,
-    List,
-    Text,
-    IconButton,
-    Tooltip,
-    Message,
     toaster,
-    Divider,
     Modal,
+    Message
 } from 'rsuite'
+import {
+    Tooltip,
+    IconButton,
+    Divider,
+    Typography
+} from "@mui/material"
 import {
     EditRound,
     Danger,
     AddOutline,
     Close
 } from "@rsuite/icons"
+import {
+    Edit,
+    DeleteForeverOutlined
+} from "@mui/icons-material"
 import {
     useCreateClassMutation,
     useLazyGetInstitutionClassesQuery,
@@ -31,10 +36,18 @@ import {
 import {
     CTable
 } from "../components/index"
+import _ from "lodash"
+import { useMediaQuery, useTheme } from "@mui/material"
 
 function AddStock() {
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const [user, setUser] = React.useState(null)
     const [status, setStatus] = React.useState(null)
+    const [selectedClass, setSelectedClass] = React.useState({
+        class_id: "",
+        class_name: ""
+    })
     const [classRomm, setClassRoom] = React.useState({
         class_name: "",
         edit: false,
@@ -51,8 +64,9 @@ function AddStock() {
         message: "",
         class_id: ""
     })
-    const [classList,setClassList] = React.useState([])
+    const [classList, setClassList] = React.useState([])
     const [openModal, setModal] = React.useState(false)
+    const [isEdit,setIsEdit] = React.useState(false)
 
     const [getClassesAction, getClassState] = useLazyGetInstitutionClassesQuery()
     const [createClassAction, createClassState] = useCreateClassMutation()
@@ -82,7 +96,7 @@ function AddStock() {
                 return [
                     ...getClassState.currentData?.list
                 ]
-            }else{
+            } else {
                 return []
             }
         }
@@ -91,27 +105,31 @@ function AddStock() {
         }
     }, [getClassState])
 
-    React.useEffect(()=>{
-        if(Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0){
-            const list = institutionClassesStatus.map((item,index)=> {
+    React.useEffect(() => {
+        if (Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0) {
+            const list = institutionClassesStatus.map((item, index) => {
+                let admitted = _.get(item, 'meta_data.admitted', "0")
+                let registered = _.get(item, "meta_data.registered", "0")
+                let waiting = Number(admitted) > 0 && Number(registered) > 0 ? `${Number(registered) - Number(admitted)}` : "0"
+
                 return {
-                    "SL_No":index+1,
-                    "Class Name":item.class_name,
-                    "Registered":0,
-                    "Admitted":0,
-                    "Actions":""
+                    "SL_No": index + 1,
+                    "Class Name": item.class_name,
+                    "Registered": registered,
+                    "Admitted": admitted,
+                    "Waiting" : waiting
                 }
             })
             setClassList(list)
-        }else{
+        } else {
             setClassList([])
         }
-    },[institutionClassesStatus])
+    }, [institutionClassesStatus])
 
 
     function handleCreateClass() {
         const user = GetCurrentUser()
-        if (!classRomm.class_name) {
+        if (!selectedClass.class_name) {
             toaster.push(<Message type="info" >Fill the class name field</Message>, { placement: "topCenter" })
             return
         }
@@ -119,7 +137,7 @@ function AddStock() {
             const { meta_data } = user
             if (meta_data && meta_data.hasOwnProperty("user_platform")) {
                 const institution_ref = meta_data.user_platform
-                const class_name = classRomm.class_name
+                const class_name = selectedClass.class_name
                 createClassAction({
                     class_name,
                     institution_ref,
@@ -156,14 +174,14 @@ function AddStock() {
     }, [createClassState])
 
     function handleUpdate() {
-        if (!classRomm.class_id || !classRomm.class_name) {
+        if (!selectedClass.class_id || !selectedClass.class_name) {
             toaster.push(<Message type="warning" >Class name is required!</Message>, { placement: "topCenter" })
             return
         }
-        const findClass = Array.isArray(institutionClassesStatus) && institutionClassesStatus.find((i) => i.id === classRomm.class_id)
+        const findClass = Array.isArray(institutionClassesStatus) && institutionClassesStatus.find((i) => i.id === selectedClass.class_id)
         if (findClass) {
             updateClassAction({
-                class_name: classRomm.class_name,
+                class_name: selectedClass.class_name,
                 institution_ref: findClass.institution_ref,
                 meta_data: findClass.meta_data,
                 class_id: findClass.id
@@ -171,7 +189,7 @@ function AddStock() {
         }
     }
     function handleClickUpdate() {
-        if (!classRomm.class_id || !classRomm.class_name) {
+        if (!selectedClass.class_id || !selectedClass.class_name) {
             toaster.push(<Message type="warning" >Class name is required!</Message>, { placement: "topCenter" })
             return
         }
@@ -288,72 +306,74 @@ function AddStock() {
                 width: "100%",
                 maxHeight: 990,
                 backgroundColor: "white",
-                borderRadius:8
+                borderRadius: 8
             }}>
                 <div style={{
                     display: "flex",
                     justifyContent: "end",
                     alignItems: "center",
-                    padding:4
+                    padding: 4
                 }}>
                     <Button
                         appearance="primary"
                         endIcon={<AddOutline color="red" />}
                         onClick={() => {
                             setModal(true)
+                            setClassRoom({
+                                edit: false,
+                                class_id: "",
+                                class_name: ""
+                            })
                         }}
                     >
                         Create New Class
                     </Button>
                 </div>
                 <CTable
-                   header={["SL_No","Class Name","Registered","Admitted","Actions"]}
-                   rows={classList}
+                    header={["SL_No", "Class Name", "Registered", "Admitted","Waiting"]}
+                    rows={classList}
+                    onRowClick={(e) => {
+                        if (Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0) {
+                            let findClickClass = institutionClassesStatus.find(i => i.class_name === e["Class Name"])
+                            if (findClickClass) {
+                                setSelectedClass({
+                                    class_id: findClickClass.id,
+                                    class_name: findClickClass.class_name
+                                })
+                            }
+                        }
+                    }}
+                    renderActions={
+                        <div style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            gap: "4px"
+                        }}>
+                            <Tooltip title={"Edit Class"} placement="bottom" arrow >
+                                <IconButton onClick={() => {
+                                    setModal(true)
+                                    setIsEdit(true)
+                                }} >
+                                    <Edit />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={"Delete Class"} placement="bottom" arrow >
+                                <IconButton onClick={()=> {
+                                    setDeleteAlert({
+                                        open:true,
+                                        title:"Delete Class",
+                                        message:"Are you sure? do you want to delete class?",
+                                        class_id:selectedClass.class_id
+                                    })
+                                }}>
+                                    <DeleteForeverOutlined color="red" />
+                                </IconButton>
+                            </Tooltip>
+                        </div>
+                    }
                 />
-                {/* {
-                    institutionClassesStatus && Array.isArray(institutionClassesStatus) && institutionClassesStatus.length > 0 && (
-                        <React.Fragment>
-                            <Divider />
-                            <List size={"lg"}>
-                                {institutionClassesStatus && Array.isArray(institutionClassesStatus) && institutionClassesStatus.map((item, index) => (
-                                    <List.Item key={index} index={index} style={{
-                                        paddingLeft: "8px",
-                                        display: "flex",
-                                        flexDirection: "row",
-                                        alignItems: "center",
-                                        gap: "8px"
-                                    }}>
-                                        <Text style={{
-                                            fontFamily: "Lato",
-                                            fontWeight: 500,
-                                            fontStyle: "normal",
-                                            lineHeight: "12px"
-                                        }}>{item.class_name}</Text>
-                                        <div style={{ flexGrow: 1 }} />
-                                        <IconButton
-                                            icon={<EditRound color="gray" />}
-                                            onClick={() => {
-                                                setClassRoom((prevState) => ({ ...prevState, edit: true, class_name: item.class_name, class_id: item.id }))
-                                                setModal(true)
-                                            }}
-                                        />
-                                        <IconButton
-                                            icon={<Danger color="red" />}
-                                            onClick={() => {
-                                                setDeleteAlert({
-                                                    open: true,
-                                                    title: "Delete Class",
-                                                    message: "Are you sure do you want to delete class?",
-                                                    class_id: item.id
-                                                })
-                                            }}
-                                        />
-                                    </List.Item>
-                                ))}
-                            </List>
-                        </React.Fragment>
-                    )
-                } */}
             </Container>
             <Modal open={openModal}>
                 <div>
@@ -364,7 +384,34 @@ function AddStock() {
                         justifyContent: "flex-end",
                         alignItems: "center"
                     }}>
-                        <IconButton onClick={() => setModal(false)} icon={<Close />} />
+                        <div style={{
+                            flexGrow: 1,
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center"
+                        }}>
+                            <Typography sx={{
+                                fontSize: "14px",
+                                fontStyle: "normal",
+                                fontWeight: "bold",
+                            }}>
+                                {
+                                    isEdit ? "Edit Class" : "Create New Class"
+                                }
+                            </Typography>
+                        </div>
+                        <Tooltip title={"Close"} placement="bottom" arrow >
+                            <IconButton onClick={() => {
+                                setModal(false)
+                                setIsEdit(false)
+                                setSelectedClass({
+                                    class_id:"",
+                                    class_name:""
+                                })
+                            }} >
+                                <Close fontSize={"12px"} />
+                            </IconButton>
+                        </Tooltip>
                     </div>
                     <Divider />
                     <div style={{
@@ -380,8 +427,8 @@ function AddStock() {
                         }}  >
                             <Form.Group controlId="className">
                                 <Form.ControlLabel>Class Name</Form.ControlLabel>
-                                <Form.Control name="className" value={classRomm.class_name} onChange={(e) => {
-                                    setClassRoom((prevState) => ({ ...prevState, class_name: e }))
+                                <Form.Control name="className" value={selectedClass.class_name} onChange={(e) => {
+                                    setSelectedClass((prevState) => ({ ...prevState, class_name: e }))
                                 }} />
                                 <Form.HelpText>Class Name is Required.</Form.HelpText>
                             </Form.Group>
@@ -393,15 +440,21 @@ function AddStock() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "flex-end",
-                            gap: 8
+                            gap: 8,
+                            paddingTop: 2
                         }}>
-                            <Button appearance="primary" onClick={classRomm.edit ? handleClickUpdate : handleCreateClass} >
+                            <Button appearance="primary" onClick={isEdit ? handleClickUpdate : handleCreateClass} >
                                 {
-                                    classRomm.edit ? "Update" : "Submit"
+                                    isEdit ? "Update" : "Submit"
                                 }
                             </Button>
                             <Button appearance="subtle" onClick={() => {
                                 setModal(!openModal)
+                                setSelectedClass({
+                                    class_id:"",
+                                    class_name:""
+                                })
+                                setIsEdit(false)
                             }} >
                                 Cancel
                             </Button>
@@ -457,9 +510,9 @@ function AddStock() {
                             })
                         }}
                         onConfirm={() => {
-                            deleteAlert.class_id &&
+                            selectedClass.class_id &&
                                 deleteClassAction({
-                                    class_id: deleteAlert.class_id
+                                    class_id: selectedClass.class_id
                                 })
                         }}
                     />

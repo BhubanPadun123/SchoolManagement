@@ -12,6 +12,7 @@ import {
 import FormAdmission from "./Form"
 import RegisterStudentList from "./RegisterList"
 import CreateAdmissionLink from "./GenerateAdmissionLink"
+import StudentList from "./StudentList"
 import {
     useLazyGetInstitutionClassesQuery,
 } from "../Redux/actions/classSetup.action"
@@ -209,7 +210,6 @@ function AdmissionForm() {
                 >
                     <Tabs.Tab eventKey="new_admission" title="New Registration" />
                     <Tabs.Tab eventKey="registered_student" title="Registered List" />
-                    <Tabs.Tab eventKey="create_link" title="Create Registration Link" />
                     <Tabs.Tab eventKey="students_list" title="Students List" />
                 </Tabs>
             </div>
@@ -233,17 +233,18 @@ function AdmissionForm() {
                         <RegisterStudentList
                             studentsList={studentsList}
                             updateRegistrationAction={updateRegistrationAction}
+                            classList={getClassListState?.currentData ? getClassListState.currentData : []}
+                            institution_ref={institution_ref}
                         />
                     )
                 }
                 {
-                    operation === "create_link" && (
-                        <CreateAdmissionLink />
-                    )
-                }
-                {
                     operation === "students_list" && (
-                        <Placeholder.Paragraph graph="circle" />
+                        <StudentList
+                            institution_ref={institution_ref}
+                            class_name={class_name}
+                            classes={classes}
+                        />
                     )
                 }
             </div>

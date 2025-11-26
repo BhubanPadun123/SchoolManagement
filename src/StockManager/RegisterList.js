@@ -1,85 +1,239 @@
 import React, { useState } from "react"
 import {
-    Table,
     Button,
-    IconButton,
     Modal,
-    Tooltip,
-    Whisper,
-    FlexboxGrid,
     Divider,
     Input,
     InputGroup,
-    Col
+    Col,
+    toaster,
+    Message
 } from "rsuite"
 import { EyeRound, TagFilter } from "@rsuite/icons"
 import SearchIcon from '@rsuite/icons/Search'
+import {
+    CTable,
+    Loader,
+    ConfirmationAlert,
+    ToastMessage
+} from "../components/index"
+import {
+    DownloadOutlined,
+    RemoveRedEyeOutlined,
+    ClearOutlined
+} from "@mui/icons-material"
+import {
+    IconButton,
+    Tooltip
+} from "@mui/material"
+import {
+    useLazyDownloadRegisterStudentsQuery
+} from "../Redux/actions/download.action"
+import { useParams } from "react-router-dom"
+import { api_service_path, baseUrl } from "../Redux/actions/utils"
+import {
+    useUpdateClassMetadataMutation,
+    useLazyGetInstitutionClassesQuery,
+    useLazyGetClassStudentsListQuery
+} from "../Redux/actions/classSetup.action"
+import _ from "lodash"
 
-const { Column, HeaderCell, Cell } = Table
 const styles = {
     marginBottom: 10
 }
 
 const CustomInputGroupWidthButton = ({ placeholder, ...props }) => (
     <InputGroup {...props} inside style={styles}>
-        <Input placeholder={placeholder} />
+        <Input placeholder={placeholder} onChange={props.handleSearch} />
         <InputGroup.Button>
             <SearchIcon />
         </InputGroup.Button>
-        <InputGroup.Button>
-           <TagFilter/>
+        <InputGroup.Button onClick={props.handleDownload}>
+            <Tooltip title={"Clear All"} arrow placement="bottom" >
+                <ClearOutlined fontSize="10" />
+            </Tooltip>
+        </InputGroup.Button>
+        <InputGroup.Button onClick={props.handleDownload}>
+            <Tooltip title={"Download"} arrow placement="bottom" >
+                <DownloadOutlined />
+            </Tooltip>
         </InputGroup.Button>
     </InputGroup>
 );
 
-const RegisterStudentList = ({ 
+function RegisterStudentList({
     studentsList = [],
-    updateRegistrationAction 
-}) => {
+    updateRegistrationAction,
+    classList,
+    institution_ref
+}){
+    const { class_name } = useParams()
     const [selectedStudent, setSelectedStudent] = useState(null)
     const [showModal, setShowModal] = useState(false)
 
-    let tempList = Array.isArray(studentsList) && studentsList.filter((i) => i.meta_data && i.meta_data.hasOwnProperty('status') ? i.meta_data.status !== "admitted" : i)
+    const [downloadStudentListAction, downloadStudentListState] = useLazyDownloadRegisterStudentsQuery()
+    const [updateClassMetadataAction, updateClassMetadataState] = useUpdateClassMetadataMutation()
+    const [getClassStudentsAction, getClassStudentState] = useLazyGetClassStudentsListQuery()
 
-    if (!Array.isArray(tempList) || tempList.length === 0){
-        return(
+    React.useEffect(()=>{
+        fetchClassStudents()
+    },[class_name,institution_ref,classList])
+
+    async function fetchClassStudents(){
+        if(Array.isArray(classList.list) && classList.list.length > 0 && class_name && institution_ref){
+            let findClass = classList.list.find(i => i.class_name === class_name)
+            if(findClass){
+                getClassStudentsAction({
+                    institution_ref:institution_ref,
+                    class_id:findClass.id
+                })
+            }
+        }
+    }
+    async function handleDownload() {
+        if (!Array.isArray(studentsList) || studentsList.length === 0 || !class_name) {
+            toaster.push(
+                <Message type="info">Required data missing for download the Excel file!</Message>,
+                { placement: "topCenter" }
+            )
+            return
+        }
+
+        try {
+            const class_ref = studentsList[0].class_ref
+            const institution_ref = studentsList[0].institution_ref
+
+            const response = await fetch(
+                `${baseUrl}/${api_service_path.download}/registered_students/${class_ref}/${institution_ref}`,
+                { method: "GET" }
+            )
+
+            if (!response.ok) {
+                throw new Error("Failed to download Excel file")
+            }
+
+            // ✅ Convert the response to a Blob
+            const blob = await response.blob()
+            const url = window.URL.createObjectURL(blob)
+
+            // ✅ Create a temporary download link
+            const link = document.createElement("a")
+            link.href = url;
+            link.download = `students_class_${class_ref}_institution_${institution_ref}.xlsx`
+            document.body.appendChild(link)
+            link.click()
+
+            // ✅ Cleanup
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
+            console.error("Error downloading Excel:", error)
+            toaster.push(
+                <Message type="error">Failed to download Excel. Please try again.</Message>,
+                { placement: "topCenter" }
+            );
+        }
+    }
+
+
+    const list = Array.isArray(studentsList) && studentsList.length > 0 &&
+        studentsList.map((item, index) => {
+            return {
+                "ID": item.id,
+                "Class_ref": item.class_ref,
+                "Institution_ref": item.institution_ref,
+                "First_Name": item.firstname,
+                "Last_Name": item.lastname,
+                "Gender": item.gender,
+                "Age": item.age,
+                "Student_Number": item.cnumber,
+                "Parent_Number": item.pnumber,
+                "Status": item.meta_data.hasOwnProperty('status') ? item.meta_data.status : "Need Action",
+            }
+        })
+
+    let tempList = Array.isArray(list) && list.filter((i) => i && i.Status !== "admitted" && i)
+
+    if (!Array.isArray(tempList) || tempList.length === 0) {
+        return (
             <div>
                 <h1 style={{
-                    textAlign:"center"
+                    textAlign: "center"
                 }}>List Empty!</h1>
             </div>
         )
-    }
-
-    const handleRowClick = (rowData) => {
-        setSelectedStudent(rowData)
-        setShowModal(true)
     }
 
     const handleClose = () => {
         setShowModal(false)
         setSelectedStudent(null)
     }
-    function handleUpdateStatus(type){
-        if(!selectedStudent || !type) return
+    function handleUpdateStatus(type) {
+        if (!selectedStudent || !type) return
         const meta_data = {
             ...selectedStudent.meta_data,
-            "status":type
+            "status": type
         }
         updateRegistrationAction({
-            registration_ref:selectedStudent.id,
-            meta_data:{
+            registration_ref: selectedStudent.id,
+            meta_data: {
                 ...meta_data
             }
         })
+        if (type === "admitted" && classList && classList.hasOwnProperty('list') && Array.isArray(classList.list)) {
+            const findClass = classList.list.find(i => i.class_name === class_name)
+            if (findClass) {
+                let students = _.get(findClass, "meta_data.students", [])
+                let isStudentExist = Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === selectedStudent.id)
+                if (findClass.meta_data && findClass.meta_data.hasOwnProperty("admitted")) {
+
+                    const meta_data = {
+                        ...findClass.meta_data,
+                        "admitted": findClass.meta_data.admitted + 1,
+                        "students": isStudentExist && students ? [...findClass.meta_data.students] : [
+                            ...findClass.meta_data.students,
+                            {
+                                "student_ref": selectedStudent.id,
+                                "roll_no": findClass.meta_data.admitted + 1
+                            }
+                        ]
+                    }
+                    updateClassMetadataAction({
+                        class_id: findClass.id,
+                        meta_data: meta_data
+                    })
+                } else {
+                    const meta_data = {
+                        ...findClass.meta_data,
+                        "admitted": 1,
+                        "students": isStudentExist ? [...findClass.meta_data.students] : [
+                            ...findClass.meta_data.students,
+                            {
+                                "student_ref": selectedStudent.id,
+                                "roll_no": 1
+                            }
+                        ]
+                    }
+                    updateClassMetadataAction({
+                        class_id: findClass.id,
+                        meta_data: meta_data
+                    })
+                }
+            }
+        }
         setSelectedStudent(null)
         setShowModal(false)
     }
+    function handleSearch(e) {
+        console.log(studentsList, "<<<<<<<")
+        // const filterList = Array.isArray(tempList) && tempList.length > 0 && tempList.filter(i => i.)
+    }
 
     return (
-        <div style={{
+        <div className="col-md-12" style={{
             paddingLeft: 4,
-            paddingRight: 4
+            paddingRight: 4,
+            width: "100%"
         }}>
             <div style={{
                 display: "flex",
@@ -87,91 +241,41 @@ const RegisterStudentList = ({
                 alignItems: "center"
             }}>
                 <Col xs={24} sm={12} md={8}>
-                    <CustomInputGroupWidthButton 
-                        size="lg" 
-                        placeholder="Search by gmail" 
+                    <CustomInputGroupWidthButton
+                        size="lg"
+                        placeholder="Search by gmail"
+                        handleDownload={handleDownload}
+                        handleSearch={handleSearch}
                     />
                 </Col>
             </div>
-            <Table
-                height={600}
-                wordWrap
-                autoHeight
-                data={tempList}
-                hover
-                bordered
-            >
-                <Column flexGrow={1}>
-                    <HeaderCell>ID</HeaderCell>
-                    <Cell dataKey="id" />
-                </Column>
-
-                <Column flexGrow={2}>
-                    <HeaderCell>First Name</HeaderCell>
-                    <Cell dataKey="firstname" />
-                </Column>
-
-                <Column flexGrow={2}>
-                    <HeaderCell>Last Name</HeaderCell>
-                    <Cell dataKey="lastname" />
-                </Column>
-
-                <Column flexGrow={1}>
-                    <HeaderCell>Gender</HeaderCell>
-                    <Cell dataKey="gender" />
-                </Column>
-
-                <Column flexGrow={1}>
-                    <HeaderCell>Age</HeaderCell>
-                    <Cell dataKey="age" />
-                </Column>
-
-                <Column flexGrow={2}>
-                    <HeaderCell>Student Number</HeaderCell>
-                    <Cell dataKey="cnumber" />
-                </Column>
-
-                <Column flexGrow={2}>
-                    <HeaderCell>Parent Number</HeaderCell>
-                    <Cell dataKey="pnumber" />
-                </Column>
-
-                <Column flexGrow={3}>
-                    <HeaderCell>
-                        Status
-                    </HeaderCell>
-                    <Cell>
-                        {
-                            (rowData) => {
-                                return (
-                                    <span style={{
-                                        color: rowData.meta_data && rowData.meta_data.hasOwnProperty("status") ? "green" : "red"
-                                    }}>{rowData.meta_data && rowData.meta_data.hasOwnProperty("status") ? rowData.meta_data.status : "Need Action"}</span>
-                                )
-                            }
-                        }
-                    </Cell>
-                </Column>
-
-                <Column flexGrow={1}>
-                    <HeaderCell>Actions</HeaderCell>
-                    <Cell>
-                        {(rowData) => (
-                            <FlexboxGrid justify="center" align="middle">
-                                <Button
-                                    endIcon={<EyeRound />}
-                                    onClick={() => handleRowClick(rowData)}
-                                    appearance="ghost"
-                                >
-                                    View
-                                </Button>
-                            </FlexboxGrid>
-                        )}
-                    </Cell>
-                </Column>
-            </Table>
-
-            {/* Student Detail Modal */}
+            <CTable
+                header={["ID", "Class_ref", "Institution_ref", "First_Name", "Last_Name", "Gender", "Age", "Student_Number", "Parent_Number", "Status"]}
+                rows={tempList}
+                renderActions={
+                    <div>
+                        <Tooltip title={"View Details"} placement="bottom" arrow >
+                            <IconButton>
+                                <RemoveRedEyeOutlined />
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                }
+                onRowClick={(e) => {
+                    const findCandidate = studentsList.find(i => i.id === e.ID)
+                    setShowModal(true)
+                    setSelectedStudent(findCandidate)
+                }}
+            />
+            {
+                (
+                    downloadStudentListState.isLoading ||
+                    updateClassMetadataState.isLoading ||
+                    getClassStudentState.isLoading
+                ) && (
+                    <Loader show={true} />
+                )
+            }
             <Modal open={showModal} onClose={handleClose} size="md">
                 <Modal.Header>
                     <Modal.Title>Student Details</Modal.Title>
@@ -219,10 +323,10 @@ const RegisterStudentList = ({
                 </Modal.Body>
                 <Divider />
                 <Modal.Footer>
-                    <Button onClick={() => {handleUpdateStatus("admitted") }} appearance="primary">
+                    <Button onClick={() => { handleUpdateStatus("admitted") }} appearance="primary">
                         Approve Admission
                     </Button>
-                    <Button onClick={() => {handleUpdateStatus("waiting") }} appearance="primary">
+                    <Button onClick={() => { handleUpdateStatus("waiting") }} appearance="primary">
                         Mark As Waiting
                     </Button>
                     <Button onClick={handleClose} appearance="ghost">

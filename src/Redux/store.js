@@ -15,6 +15,9 @@ import {
 import {
     uploadContentAction
 } from "./actions/upload_content"
+import {
+    downloadAction
+} from "./actions/download.action"
 
 
 export const Store = configureStore({
@@ -23,7 +26,8 @@ export const Store = configureStore({
         [settingAction.reducerPath] : settingAction.reducer,
         [classRoomAction.reducerPath] : classRoomAction.reducer,
         [admissionAction.reducerPath] : admissionAction.reducer,
-        [uploadContentAction.reducerPath] : uploadContentAction.reducer
+        [uploadContentAction.reducerPath] : uploadContentAction.reducer,
+        [downloadAction.reducerPath] : downloadAction.reducer
     },
     middleware:(getDefaultMiddleware)=> 
         getDefaultMiddleware().
@@ -31,7 +35,8 @@ export const Store = configureStore({
         concat(userActions.middleware).
         concat(classRoomAction.middleware).
         concat(admissionAction.middleware).
-        concat(uploadContentAction.middleware)
+        concat(uploadContentAction.middleware).
+        concat(downloadAction.middleware)
 })
 
 

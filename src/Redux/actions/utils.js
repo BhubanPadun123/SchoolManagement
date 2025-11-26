@@ -5,5 +5,6 @@ export const api_service_path = {
     class_room:"api/class",
     admission:"api/admission",
     user:"api/user",
-    upload_content:"api/imageUpload"
+    upload_content:"api/imageUpload",
+    download:"api/download"
 }

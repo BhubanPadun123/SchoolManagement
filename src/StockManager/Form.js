@@ -26,6 +26,9 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material"
+import {
+    useUpdateClassMetadataMutation,
+} from "../Redux/actions/classSetup.action"
 
 const { StringType } = Schema.Types;
 
@@ -88,7 +91,8 @@ const FormAdmission = ({
         type: ""
     })
 
-    const [registerStudentAction, registerStudentState] = useRegisterStudentMutation();
+    const [registerStudentAction, registerStudentState] = useRegisterStudentMutation()
+    const [updateClassMetadataAction, updateClassMetadataState] = useUpdateClassMetadataMutation()
 
     const handleSubmit = () => {
         if (!formRef.current.check() || !institution_ref || !Array.isArray(classes) || !class_name) {
@@ -103,6 +107,26 @@ const FormAdmission = ({
             institution_ref: institution_ref,
             meta_data: {}
         })
+        if (classRef.meta_data && classRef.meta_data.hasOwnProperty('registered')) {
+            let meta_data = {
+                ...classRef.meta_data,
+                "registered": classRef.meta_data.registered + 1
+            }
+            updateClassMetadataAction({
+                class_id: classRef.id,
+                meta_data: meta_data
+            })
+        } else {
+            let meta_data = {
+                ...classRef.meta_data,
+                "registered": 1
+            }
+            updateClassMetadataAction({
+                class_id: classRef.id,
+                meta_data: meta_data
+            })
+        }
+
     }
 
     const registerStudentStatus = useMemo(() => {
@@ -135,7 +159,7 @@ const FormAdmission = ({
                 display: 'flex',
                 justifyContent: 'center',
                 padding: '20px',
-                alignItems:"center"
+                alignItems: "center"
             }}
         >
             <Panel
@@ -146,7 +170,7 @@ const FormAdmission = ({
                     backgroundColor: '#a18686ff',
                     borderRadius: 10,
                     padding: 20,
-                    width:isMobile ? "auto" : 999
+                    width: isMobile ? "auto" : 999
                 }}
             >
                 <Header style={{
@@ -272,7 +296,8 @@ const FormAdmission = ({
             </Panel>
             {
                 (
-                    registerStudentState.isLoading
+                    registerStudentState.isLoading ||
+                    updateClassMetadataState.isLoading
                 ) && (
                     <Loader show={true} />
                 )

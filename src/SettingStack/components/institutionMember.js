@@ -33,7 +33,8 @@ import {
     useLazyGetPlatformUserListQuery,
     useUpdateInstitutionMetadataMutation,
     useUpdateUserMetadataMutation,
-    useDeleteUserFromInstitutionMutation
+    useDeleteUserFromInstitutionMutation,
+    useLazyGetInstitutionMetadataQuery
 } from "../../Redux/actions/setting.action"
 import _ from "lodash"
 
@@ -46,6 +47,8 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
     const [getUserListAction, getUserListState] = useLazyGetPlatformUserListQuery()
     const [updateUserMetadataAction, updateUserMetadataState] = useUpdateUserMetadataMutation()
     const [deleteUserAction, deleteUserState] = useDeleteUserFromInstitutionMutation()
+    const [updatePlatformMetadataAction,updatePlatformMetadataState] = useUpdateInstitutionMetadataMutation()
+    const [getPlatformMetadataAction,getPlatformMetadataState] = useLazyGetInstitutionMetadataQuery()
 
     const [status, setStatus] = useState(null)
     const [selectedUserId, setSelectedUserId] = useState(null)
@@ -69,6 +72,13 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
         message: "",
         title: ""
     })
+
+    React.useEffect(()=>{
+        if(user){
+            let user_platform = _.get(user,"meta_data.user_platform",null)
+            user_platform && getPlatformMetadataAction(user_platform)
+        }
+    },[user])
 
     useEffect(() => {
         if (institutionBasicInfo) {
@@ -115,18 +125,27 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
         }
     }, [createRolesStatus])
 
+    const stuffsEmailList = React.useMemo(()=> {
+        if(getPlatformMetadataState.isSuccess){
+            let emailList = _.get(getPlatformMetadataState,"currentData.metadata.meta_data.stuffs",null)
+            return emailList
+        }else{
+            return []
+        }
+    },[getPlatformMetadataState])
+
     const platformUserListStatus = useMemo(() => {
-        if (getUserListState.isSuccess) {
-            return [
-                ...getUserListState.currentData?.list
-            ]
+        if (getUserListState.isSuccess && Array.isArray(stuffsEmailList) && stuffsEmailList.length > 0) {
+            let allUserList = _.get(getUserListState,"currentData.list",[])
+            let finalList = Array.isArray(allUserList) && allUserList.length > 0 && allUserList.filter((item) => stuffsEmailList.includes(item.email))
+            return finalList
         }
         else if (getUserListState.isError) {
             return []
         } else {
             return []
         }
-    }, [getUserListState])
+    }, [getUserListState,stuffsEmailList])
 
 
     const privilegesList = [
@@ -180,6 +199,22 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                 "user_platform": institutionBasicInfo?.id
             }
         })
+        if(institutionMetadata && institutionMetadata.hasOwnProperty("meta_data")){
+            let stuffs = _.get(institutionMetadata,"meta_data.stuff",[])
+            if(Array.isArray(stuffs) && stuffs.length > 0 && !stuffs.includes(formValue.email)){
+                stuffs = [...stuffs,formValue.email]
+            }else if(Array.isArray(stuffs) && stuffs.length === 0){
+                stuffs = [formValue.email]
+            }
+            let meta_data = {
+                ...institutionMetadata.meta_data,
+                "stuffs":stuffs
+            }
+            updatePlatformMetadataAction({
+                platform_id:institutionMetadata.id,
+                meta_data:meta_data
+            })
+        }
     }
 
     /*** Role Actions ***/
@@ -213,6 +248,7 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                 const platform_id = institutionBasicInfo.id
                 platform_id && getUserListAction({ platform_id })
             }
+            createUserState.reset()
             return {
                 show: true,
                 message: createUserState.data?.message,
@@ -317,6 +353,8 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
             setStatus(deleteUserStatus)
         }
     },[deleteUserStatus])
+
+
 
     return (
         <div
@@ -503,7 +541,9 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
                     createUserState.isLoading ||
                     getUserListState.isLoading ||
                     updateUserMetadataState.isLoading ||
-                    deleteUserState.isLoading
+                    deleteUserState.isLoading ||
+                    updatePlatformMetadataState.isLoading ||
+                    getPlatformMetadataState.isLoading
                 ) && (
                     <Loader show={true} />
                 )

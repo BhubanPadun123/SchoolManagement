@@ -4,7 +4,8 @@ import {
     Loader
 } from "../components/index"
 import {
-    useLazyCheckUserPlatformQuery
+    useLazyCheckUserPlatformQuery,
+    useResetPasswordMutation
 } from "../Redux/actions/user.action"
 import {
     toaster,
@@ -21,8 +22,11 @@ export default function LoginPage() {
         type: "",
         message: ""
     })
+    const [email,setEmail] = React.useState("")
+    const [new_password,setNewpassword] = React.useState("")
     const [platformName, setPlatformName] = React.useState("")
     const [checkUserAction, checkUserState] = useLazyCheckUserPlatformQuery()
+    const [resetPasswordAction,resetPasswordState] = useResetPasswordMutation()
 
     const checkUserStatus = React.useMemo(() => {
         if (checkUserState.isSuccess) {
@@ -47,8 +51,22 @@ export default function LoginPage() {
     React.useEffect(() => {
         if (checkUserStatus) {
             setNotification(checkUserStatus)
+            if(checkUserStatus.type === "success"){
+                navigate("/login")
+            }
         }
     }, [checkUserStatus])
+
+    function handleResetPass(){
+        if(!email || !new_password){
+            toaster.push(<Message type="info" >Please fill the email and password!</Message>,{placement:"topCenter"})
+            return
+        }
+        resetPasswordAction({
+            email:email,
+            new_password:new_password
+        })
+    }
 
 
     return (
@@ -113,7 +131,8 @@ export default function LoginPage() {
             </div>
             {
                 (
-                    checkUserState.isLoading
+                    checkUserState.isLoading ||
+                    resetPasswordState.isLoading
                 ) && (
                     <Loader show={true} />
                 )

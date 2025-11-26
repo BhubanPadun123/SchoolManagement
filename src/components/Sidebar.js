@@ -12,7 +12,7 @@ import {
     Toolbar,
     Typography,
     Button
-} from '@mui/material';
+} from '@mui/material'
 import {
     Menu as MenuIcon,
     Home as HomeIcon,

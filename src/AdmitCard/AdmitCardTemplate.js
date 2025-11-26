@@ -19,7 +19,7 @@ const sampleStudent = {
 };
 
 // Utility: placeholder photo SVG
-const PhotoPlaceholder = ({ size = 96 }) => (
+export const PhotoPlaceholder = ({ size = 96 }) => (
     <div
         className="flex items-center justify-center bg-gray-100 rounded overflow-hidden"
         style={{ width: size, height: size }}
@@ -43,7 +43,7 @@ const PhotoPlaceholder = ({ size = 96 }) => (
 );
 
 // Utility: small QR placeholder
-const QRPlaceholder = ({ size = 72 }) => (
+export const QRPlaceholder = ({ size = 72 }) => (
     <div
         style={{ width: size, height: size }}
         className="bg-white border p-1 grid grid-cols-3 gap-1"
@@ -58,7 +58,7 @@ const QRPlaceholder = ({ size = 72 }) => (
 );
 
 // ------------------------- Template A: Classic horizontal -------------------------
-function AdmitCardA({ student = sampleStudent }) {
+export function AdmitCardA({ student = sampleStudent }) {
     return (
         <div
             className="max-w-3xl mx-auto border rounded-lg shadow-sm p-6 bg-white bg-cover bg-center"
@@ -147,7 +147,7 @@ function AdmitCardA({ student = sampleStudent }) {
 }
 
 // ------------------------- Template B: ID-card style (compact vertical) -------------------------
-function AdmitCardB({ student = sampleStudent }) {
+export function AdmitCardB({ student = sampleStudent }) {
     return (
         <div
             className="max-w-3xl mx-auto border rounded-lg overflow-hidden shadow-sm bg-cover bg-white bg-center"
@@ -204,7 +204,7 @@ function AdmitCardB({ student = sampleStudent }) {
 }
 
 // ------------------------- Template C: Modern full-bleed color header -------------------------
-function AdmitCardC({ student = sampleStudent }) {
+export function AdmitCardC({ student = sampleStudent }) {
     return (
         <div
             className="max-w-3xl mx-auto border rounded-lg overflow-hidden shadow-sm bg-cover bg-center"
@@ -292,7 +292,7 @@ function AdmitCardC({ student = sampleStudent }) {
 }
 
 // ------------------------- Template D: Minimal two-column with accent -------------------------
-function AdmitCardD({ student = sampleStudent }) {
+export function AdmitCardD({ student = sampleStudent }) {
     return (
         <div
             className="max-w-2xl mx-auto border rounded-lg overflow-hidden shadow-sm bg-cover bg-center"
@@ -395,9 +395,6 @@ export default function AdmitCardPlayground() {
             <h1 className="text-2xl font-bold text-center">
                 Examination Admit Card Templates
             </h1>
-            <p className="text-md text-white text-center">
-                Select Examination Admit Card Template For Use
-            </p>
 
             <div className="flex flex-col items-center gap-8">
                 <div className="w-full max-w-3xl">

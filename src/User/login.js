@@ -3,7 +3,8 @@ import React, {
   useMemo,
   useEffect
 } from "react";
-import { ICONS } from "../Images";
+import { ICONS } from "../Images"
+import _ from "lodash"
 import {
   Container,
   Content,
@@ -17,20 +18,48 @@ import {
 } from "rsuite";
 import { useActionData, useNavigate } from "react-router-dom"
 import {
-  useUserLoginMutation
+  useUserLoginMutation,
+  useResetPasswordMutation
 } from "../Redux/actions/user.action"
 import {
   Loader,
   ToastMessage,
   ConfirmationAlert
 } from "../components/index"
+import {
+  Modal,
+  Typography,
+  IconButton,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  Divider,
+  TextField,
+  InputAdornment
+} from "@mui/material"
+import {
+  Close,
+  EmailOutlined,
+  PasswordOutlined
+} from "@mui/icons-material"
 
 const { StringType } = Schema.Types
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [status, setStatus] = useState(null)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+  const [status, setStatus] = useState({
+    show:false,
+    message:"",
+    type:""
+  })
+  const [email,setEmail] = useState("")
+  const [new_password,setNewpassword] = useState("")
   const [loginUserAction, loginUserSatate] = useUserLoginMutation()
+  const [resetPasswordAction, resetPasswordState] = useResetPasswordMutation()
+  const [resetPassword, setResetPassword] = useState(false)
+
 
   const updateConfirmationStatus = useMemo(() => {
     if (loginUserSatate.isSuccess) {
@@ -57,6 +86,31 @@ export default function LoginPage() {
       setStatus(updateConfirmationStatus)
     }
   }, [updateConfirmationStatus])
+  const resetPasswordStatus = React.useMemo(()=>{
+    if(resetPasswordState.isSuccess){
+      const message = _.get(resetPasswordState,"data.message",null)
+      toaster.push(<Message type="success">{message}</Message>,{placement:"topCenter"})
+      return {
+        show:true,
+        type:"success",
+        message:message,
+      }
+    }else if(resetPasswordState.isError){
+      return {
+        show:true,
+        type:"error",
+        message:"Error while reset the password!"
+      }
+    }
+  },resetPasswordState)
+  React.useEffect(()=>{
+    if(resetPasswordStatus){
+      setStatus(resetPasswordStatus)
+      setEmail("")
+      setNewpassword("")
+      setResetPassword(false)
+    }
+  },[resetPasswordStatus])
 
 
   const model = Schema.Model({
@@ -68,6 +122,16 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     loginUserAction(e)
+  }
+  function handleResetPass() {
+    if (!email || !new_password) {
+      toaster.push(<Message type="info" >Please fill the email and password!</Message>, { placement: "topCenter" })
+      return
+    }
+    resetPasswordAction({
+      email: email,
+      new_password: new_password
+    })
   }
 
   return (
@@ -122,20 +186,155 @@ export default function LoginPage() {
                     Sign Up
                   </a>
                 </p>
-                <Button appearance="subtle" block onClick={()=> {
+                <Button appearance="subtle" block onClick={() => {
                   localStorage.clear()
-                  toaster.push(<Message type="success" >User logout successfull</Message>,{placement:"topCenter"})
+                  toaster.push(<Message type="success" >User logout successfull</Message>, { placement: "topCenter" })
                   navigate("/")
                 }}>
                   Logout
                 </Button>
+                <p style={{ textAlign: "center", color: "#ddd", marginTop: "10px" }}>
+                  Forget password?{" "}
+                  <a href="#" style={{ color: "#4ea9ff" }} onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setResetPassword(true)
+                  }}>
+                    Reset
+                  </a>
+                </p>
               </Form>
             </Panel>
           </div>
         </div>
+        <Modal
+          open={resetPassword}
+          onClose={() => {
+            setResetPassword(false)
+          }}
+          sx={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
+          <div style={{
+            width: isMobile ? "90%" : "400px",
+            backgroundColor: "#0a0909ff",
+            border: "1px solid #FFFF",
+            borderRadius: "4px"
+          }}>
+            <div style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center"
+            }}>
+              <Typography variant={isMobile ? "body1" : "h4"} sx={{
+                fontFamily: "Lato",
+                color: "#FFFF",
+                fontWeight: 400,
+                fontStyle: "normal",
+                flex: 1
+              }} >Reset Password ?</Typography>
+              <Tooltip title={"Close"} placement="bottom" arrow >
+                <IconButton>
+                  <Close sx={{
+                    backgroundColor: "#FFFF"
+                  }} />
+                </IconButton>
+              </Tooltip>
+            </div>
+            <Divider sx={{
+              backgroundColor: "#FFFF"
+            }} />
+            <div style={{ height: "8px" }} />
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              paddingLeft: "8px",
+              paddingRight: "8px",
+              paddingTop: "10px",
+              paddingBottom: "10px"
+            }}>
+              <TextField fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start" >
+                      <EmailOutlined />
+                    </InputAdornment>
+                  )
+                }}
+                placeholder="Enter Email"
+                label={"Enter Email"}
+                variant="outlined"
+                style={{
+                  backgroundColor: "#FFFF",
+                  borderRadius: "4px"
+                }}
+                value={email}
+                onChange={(e)=> {
+                  setEmail(e.target.value)
+                }}
+                type="email"
+              />
+              <TextField fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start" >
+                      <PasswordOutlined />
+                    </InputAdornment>
+                  )
+                }}
+                placeholder="Enter New Password"
+                label={"Enter New Password"}
+                variant="outlined"
+                style={{
+                  backgroundColor: "#FFFF",
+                  borderRadius: "4px"
+                }}
+                value={new_password}
+                onChange={(e)=> {
+                  setNewpassword(e.target.value)
+                }}
+                type="password"
+              />
+            </div>
+            <div style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: 'flex-end',
+              alignItems: "center",
+              gap: "10px",
+              padding: "8px"
+            }}>
+              <Button
+                type="button"
+                appearance="primary"
+                onClick={handleResetPass}
+              >
+                Submit
+              </Button>
+              <Button
+                type="button"
+                appearance="subtle"
+                onClick={()=> {
+                  setEmail("")
+                  setNewpassword("")
+                  setResetPassword(false)
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
         {
           (
-            loginUserSatate.isLoading
+            loginUserSatate.isLoading ||
+            resetPasswordState.isLoading
           ) && (
             <Loader
               show={true}
@@ -143,11 +342,15 @@ export default function LoginPage() {
           )
         }
         {
-          status && (
+          status.show && (
             <ToastMessage
               {...status}
               onClose={() => {
-                setStatus(null)
+                setStatus({
+                  show:false,
+                  message:"",
+                  type:""
+                })
               }}
             />
           )

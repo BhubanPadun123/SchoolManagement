@@ -5,15 +5,17 @@ import React,{
 import { Outlet, useNavigate } from 'react-router-dom'
 import "./root.css"
 import {
-    Sidebar
+    Sidebar,
+    PlatformFeeStructure
 } from "../components/index"
 import { Typography } from '@mui/material'
 import {
     Fingerprint,
     School,
     Attractions,
-    AddLinkOutlined
+    AddLinkOutlined,
 } from "@mui/icons-material"
+import CleanHandsIcon from '@mui/icons-material/CleanHands'
 
 const StackLayer = () => {
     const navigate = useNavigate()
@@ -70,6 +72,11 @@ const StackLayer = () => {
                             name:"Manage Employees",
                             to:"employees",
                             icon:<Attractions/>
+                        },
+                        {
+                            name:"Setting Platform Fee",
+                            to:"fee_structure",
+                            icon:<CleanHandsIcon/>
                         }
                     ]}
                     handleNav={(e)=> {

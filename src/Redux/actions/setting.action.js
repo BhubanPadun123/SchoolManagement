@@ -126,6 +126,47 @@ export const settingAction = createApi({
                 url:`/delete_platfrom_user/${user_ref}`,
                 method:"DELETE"
             })
+        }),
+        createPlatformFee:builder.mutation({
+            query:({
+                fee_name,
+                fee_amount
+            })=> ({
+                url:`/create_platform_fee?fee_name=${fee_name}&fee_amount=${fee_amount}`,
+                method:"POST",
+                body:{
+                    fee_name,
+                    fee_amount
+                }
+            })
+        }),
+        editPlatformFee:builder.mutation({
+            query:({
+                fee_ref,
+                fee_name,
+                fee_amount
+            })=> ({
+                url:`/edit_fee/${fee_ref}`,
+                method:"PUT",
+                body:{
+                    fee_name,
+                    fee_amount
+                }
+            })
+        }),
+        deletePlatformFee:builder.mutation({
+            query:({
+                fee_ref
+            })=> ({
+                url:`/remove_fee/${fee_ref}`,
+                method:"DELETE"
+            })
+        }),
+        getAllFee:builder.query({
+            query:()=> ({
+                url:"/all_fee",
+                method:"GET"
+            })
         })
     })
 })
@@ -148,5 +189,10 @@ export const {
     useLazyGetPlatformUserListQuery,
     useGetPlatformUserListQuery,
     useUpdateUserMetadataMutation,
-    useDeleteUserFromInstitutionMutation
+    useDeleteUserFromInstitutionMutation,
+
+    useCreatePlatformFeeMutation,
+    useDeletePlatformFeeMutation,
+    useEditPlatformFeeMutation,
+    useLazyGetAllFeeQuery
 } = settingAction

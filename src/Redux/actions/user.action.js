@@ -43,6 +43,16 @@ export const userActions = createApi({
                 url:`/check_user_platform/${user_email}`,
                 method:"GET"
             })
+        }),
+        resetPassword:builder.mutation({
+            query:({email,new_password})=> ({
+                url:`/reset_password?email=${email}&new_password=${new_password}`,
+                method:"PUT",
+                body:{
+                    email,
+                    new_password
+                }
+            })
         })
     })
 })
@@ -52,5 +62,6 @@ export const {
     useUserRegisterMutation,
     useUserLoginMutation,
     useLazyGetUserPrivilegesQuery,
-    useLazyCheckUserPlatformQuery
+    useLazyCheckUserPlatformQuery,
+    useResetPasswordMutation
 } = userActions

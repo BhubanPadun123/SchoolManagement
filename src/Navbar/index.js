@@ -23,12 +23,13 @@ const routesList = [
     { name: "Setting", path: "/setting" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
+    {name:"Admin",path:"/admin"},
     { name: "Login", path: "/auth" },
 ]
 const publicRoutes = [
     {name:"Home",path:"/"},
     {name:"Services",path:"/service"},
-    {name:"Login",path:"/auth"}
+    {name:"Login",path:"/auth"},
 ]
 
 const ResponsiveHeader= () => {

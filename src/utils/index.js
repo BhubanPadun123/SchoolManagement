@@ -9,6 +9,12 @@ import {
     CertificateIcon,
     NotificationIcon
 } from "./icons"
+import {
+    ReceiptLongOutlined,
+    CleanHandsOutlined,
+    DonutLargeOutlined,
+    FlightClassOutlined
+} from "@mui/icons-material"
 
 export const service_list = [
     {
@@ -27,9 +33,48 @@ export const service_list = [
         ]
     },
     {
-        "title":"Admit Card Management",
+        "title":"Exam Admit Card",
         "icon":<Onboarding/>,
         "to":"/admit",
+        "list":[
+            {
+                "name":"New Boarding",
+                "icon":<NewPatientAddIcon/>
+            }
+        ]
+    },
+    {
+        "title":"Exam Planning",
+        "icon":<ReceiptLongOutlined sx={{
+            fontSize:"60px"
+        }} />,
+        "to":"/admit",
+        "list":[
+            {
+                "name":"New Boarding",
+                "icon":<NewPatientAddIcon/>
+            }
+        ]
+    },
+    {
+        "title":"Monthly Fee",
+        "icon":<CleanHandsOutlined sx={{
+            fontSize:"60px"
+        }} />,
+        "to":"/admit",
+        "list":[
+            {
+                "name":"New Boarding",
+                "icon":<NewPatientAddIcon/>
+            }
+        ]
+    },
+        {
+        "title":"Class Subject's",
+        "icon":<FlightClassOutlined sx={{
+            fontSize:"60px"
+        }} />,
+        "to":"/subjects",
         "list":[
             {
                 "name":"New Boarding",
@@ -51,6 +96,19 @@ export const service_list = [
     {
         "title":"Certificate Management",
         "icon":<CertificateIcon/>,
+        "to":"/stock",
+        "list":[
+            {
+                "name":"New Boarding",
+                "icon":<NewPatientAddIcon/>
+            }
+        ]
+    },
+        {
+        "title":"Student Stats",
+        "icon":<DonutLargeOutlined sx={{
+            fontSize:"60px"
+        }} />,
         "to":"/stock",
         "list":[
             {
@@ -121,99 +179,6 @@ export const service_list = [
             }
         ]
     },
-    {
-        "title":"Test Report's",
-        "icon":<TestReports/>,
-        "to":"/stock",
-        "list":[
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            }
-        ]
-    },
-    {
-        "title":"Test Report's",
-        "icon":<TestReports/>,
-        "to":"/stock",
-        "list":[
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            }
-        ]
-    },
-    {
-        "title":"Test Report's",
-        "icon":<TestReports/>,
-        "to":"/stock",
-        "list":[
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            },
-            {
-                "name":"New Boarding",
-                "icon":<NewPatientAddIcon/>
-            }
-        ]
-    }
 ]
 
 export const class_list = [

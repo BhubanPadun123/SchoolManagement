@@ -15,6 +15,7 @@ import {
     List,
     IconButton
 } from "rsuite"
+import {Button} from "@mui/material"
 import { useNavigate } from "react-router-dom"
 import { service_list,class_list } from "../utils"
 import {
@@ -59,7 +60,7 @@ export default function Home() {
             return []
         }
     },[getClassesState])
-    console.log(classList)
+
     return (
         <Container>
             <Content className="show-grid">
@@ -79,12 +80,29 @@ export default function Home() {
                                 >
                                     {item.title}
                                 </Text>
+                                {
+                                    item.title === "Admission" && (
+                                        <div>
+                                            <Button
+                                               onClick={()=> navigate(`${item.to}`)}
+                                               size="small"
+                                               variant="outlined"
+                                            >
+                                                Create Class
+                                            </Button>
+                                        </div>
+                                    )
+                                }
                                 <div className="service__list_container">
                                     <List bordered>
                                         {
                                             (
-                                                item.title === "Admit Card Management" ||
-                                                item.title === "Admission" 
+                                                item.title === "Exam Admit Card" ||
+                                                item.title === "Admission" ||
+                                                item.title === "Class Subject's" ||
+                                                item.title === "Exam Planning" ||
+                                                item.title === "Monthly Fee" ||
+                                                item.title === "Result Management"
                                             ) && Array.isArray(classList) && classList.length > 0 && 
                                             classList.map((ls,key)=> {
                                                 return (

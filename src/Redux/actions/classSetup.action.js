@@ -42,6 +42,19 @@ export const classRoomAction = createApi({
                 url:`/remove_class/${class_id}`,
                 method:"DELETE"
             })
+        }),
+        updateClassMetadata:builder.mutation({
+            query:({class_id,meta_data})=> ({
+                url:`/update_metadata/${class_id}`,
+                method:"PUT",
+                body:meta_data
+            })
+        }),
+        getClassStudentsList:builder.query({
+            query:({institution_ref,class_id})=> ({
+                url:`/students/${institution_ref}/${class_id}`,
+                method:"GET"
+            })
         })
     })
 })
@@ -50,5 +63,7 @@ export const {
     useCreateClassMutation,
     useLazyGetInstitutionClassesQuery,
     useDeleteInstitutionClassMutation,
-    useEditInstitutionClassMutation
+    useEditInstitutionClassMutation,
+    useUpdateClassMetadataMutation,
+    useLazyGetClassStudentsListQuery
 } = classRoomAction

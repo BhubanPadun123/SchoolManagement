@@ -14,7 +14,8 @@ import {
 import {
     StackLayer,
     PlatformSetup,
-    CreateRegistrationLink
+    CreateRegistrationLink,
+    PlatformFeeStructure
 } from "./SettingStack/index"
 import {
     LoginPage,
@@ -35,6 +36,16 @@ import {
     ServicesPage,
     LoginPage as CLogin
 } from "./public/index"
+import {
+    AdminRoot,
+    CreateClient,
+    ClientList,
+    PlatformFee
+} from "./AdminPanel/index"
+import {
+    SubjectRootLayout,
+    ManageSubjects
+} from "./Subjects/index"
 
 export default function Routing() {
     const path = useLocation()
@@ -77,6 +88,7 @@ export default function Routing() {
             <Route path="/setting" element={<StackLayer />}>
                 <Route path="platform" element={<PlatformSetup />} />
                 <Route path="student_registration" element={<CreateRegistrationLink />} />
+                <Route path="fee_structure" element={<PlatformFeeStructure/>} />
             </Route>
             <Route path="/auth" element={<AuthStack />}>
                 <Route path="login" element={<LoginPage />} />
@@ -89,6 +101,14 @@ export default function Routing() {
 
             <Route path="/public" element={<PublicRootLayer />} >
                 <Route path="register" element={<RegisterStudents />} />
+            </Route>
+            <Route path="/admin" element={<AdminRoot/>} >
+               <Route path="new" element={<CreateClient/>} />
+               <Route path="client_list" element={<ClientList/>} />
+               <Route path="fee_setting" element={<PlatformFee/>} />
+            </Route>
+            <Route path="/subjects" element={<SubjectRootLayout/>} >
+                <Route path=":class_name" element={<ManageSubjects />} />
             </Route>
         </Routes>
     )

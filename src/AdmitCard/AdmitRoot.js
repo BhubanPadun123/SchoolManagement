@@ -45,6 +45,7 @@ export default function AdmitRoot() {
             user_platform && getClassesAction({
                 institution_ref: user_platform
             })
+            handleNav("template")
         }
     }, [])
 

@@ -2,9 +2,11 @@ import React from "react"
 import {
     useNavigate
 } from "react-router-dom"
+import ConnectUs from "./ContactUs";
 
 const LandingPage = () => {
     const navigate = useNavigate()
+    const [isConnect, setConnect] = React.useState(false)
 
 
     return (
@@ -14,7 +16,13 @@ const LandingPage = () => {
                     <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">Simplify School & College Management</h1>
                     <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">Manage students, teachers, attendance, and academics — all in one intuitive dashboard.</p>
                     <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
-                        <a href="#" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900">
+                        <a href="#" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setConnect(true)
+                            }}
+                        >
                             Get started
                             <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
@@ -185,10 +193,21 @@ const LandingPage = () => {
             <section id="contact" className="px-8 md:px-16 py-16 bg-blue-600 text-white text-center">
                 <h3 className="text-3xl font-bold mb-6">Get in Touch</h3>
                 <p className="mb-6 text-lg">Interested in transforming your school or college with EduManage?</p>
-                <button className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-gray-100">
+                <button className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-gray-100"
+                    onClick={() => {
+                        setConnect(true)
+                    }}
+                >
                     Contact Us
                 </button>
             </section>
+
+            <ConnectUs
+                open={isConnect}
+                onClose={() => {
+                    setConnect(false)
+                }}
+            />
 
             {/* Footer */}
             <footer className="text-center py-6 bg-gray-800 text-gray-200">
