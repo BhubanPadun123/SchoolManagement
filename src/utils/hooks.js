@@ -8,3 +8,6 @@ export const GetCurrentUser = () => {
         return null
     }
 }
+
+export const local_url = "http://localhost:3000"
+export const production_url = "http://localhost:3000"

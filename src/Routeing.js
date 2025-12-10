@@ -34,7 +34,11 @@ import {
     FeatureInfo,
     FeatureLayer,
     ServicesPage,
-    LoginPage as CLogin
+    LoginPage as CLogin,
+    NewStudentForm,
+    PublicResults,
+    StudentRegistration,
+    StudentsRegistrationForm
 } from "./public/index"
 import {
     AdminRoot,
@@ -46,6 +50,15 @@ import {
     SubjectRootLayout,
     ManageSubjects
 } from "./Subjects/index"
+import {
+    ExamRoot,
+    CreateExamTimetablePage,
+    ManageExamsPage,
+    EditExamDetails
+} from "./Exam/index"
+import {
+    FeeRoot
+} from "./FeeManager"
 
 export default function Routing() {
     const path = useLocation()
@@ -70,6 +83,10 @@ export default function Routing() {
                 <Route path="/auth" element={<CLogin />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/results" element={<PublicResults/>} />
+                <Route path="/registration" element={<StudentRegistration/>} />
+                <Route path="/registration/:data" element={<StudentsRegistrationForm/>} />
+                <Route path="/registrations/:institution_id/:class/:link_id" element={<NewStudentForm/>} />
             </Routes>
         )
     }
@@ -110,6 +127,12 @@ export default function Routing() {
             <Route path="/subjects" element={<SubjectRootLayout/>} >
                 <Route path=":class_name" element={<ManageSubjects />} />
             </Route>
+            <Route path="/exam" element={<ExamRoot/>} >
+               <Route path="create" element={<CreateExamTimetablePage/>} />
+               <Route path="manage" element={<ManageExamsPage/>} />
+               <Route path=":examInfo" element={<EditExamDetails/>} />
+            </Route>
+            <Route path="/fee" element={<FeeRoot/>} ></Route>
         </Routes>
     )
 }

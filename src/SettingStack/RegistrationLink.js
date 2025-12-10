@@ -24,6 +24,10 @@ import {
     ToastMessage,
     CTable
 } from "../components/index"
+import {
+    local_url,
+    production_url
+} from "../utils/hooks"
 import _ from "lodash"
 import {
     Edit,
@@ -191,10 +195,20 @@ export default function CreateRegistrationLink() {
         }
         const findLink = links.find(i => i.class_ref === findClass.id && i.institution_ref === findClass.institution_ref)
         if (!findLink) return
+
         switch (alert.operation_type) {
             case "delete": {
                 deleteLinkAction({
                     link_id: findLink.id
+                })
+            }
+            case "copy":{
+                const url = process.env.NODE_ENV === "production" ? production_url : local_url
+                navigator.clipboard.writeText(`${url}/registrations/${findLink.institution_ref}/${findLink.class_ref}/${findLink.id}`).then(()=>{
+                    setAlert({
+                        open:false,
+                        operation_type:""
+                    })
                 })
             }
             default:
@@ -423,9 +437,9 @@ export default function CreateRegistrationLink() {
                         <IconButton onClick={handleEditLink}>
                             <Edit />
                         </IconButton>
-                        <IconButton onClick={handleShareLink}>
+                        {/* <IconButton onClick={handleShareLink}>
                             <Share />
-                        </IconButton>
+                        </IconButton> */}
                         <IconButton onClick={handleDeleteLink}>
                             <Delete />
                         </IconButton>

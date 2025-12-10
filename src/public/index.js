@@ -5,6 +5,10 @@ import FeatureInfo from "./FeaturePage"
 import FeatureLayer from "./FeaturesLayer"
 import ServicesPage from "./services"
 import LoginPage from "./Auth"
+import NewStudentForm from "./NewStudentRegistration"
+import PublicResults from "./Results"
+import StudentRegistration from "./Registrations"
+import StudentsRegistrationForm from "./StudentRegistrationForm"
 
 export {
     RegisterStudents,
@@ -13,5 +17,9 @@ export {
     FeatureInfo,
     FeatureLayer,
     ServicesPage,
-    LoginPage
+    LoginPage,
+    NewStudentForm,
+    PublicResults,
+    StudentRegistration,
+    StudentsRegistrationForm
 }

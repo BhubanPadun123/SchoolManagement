@@ -48,7 +48,7 @@ export const service_list = [
         "icon":<ReceiptLongOutlined sx={{
             fontSize:"60px"
         }} />,
-        "to":"/admit",
+        "to":"/exam",
         "list":[
             {
                 "name":"New Boarding",
@@ -61,7 +61,7 @@ export const service_list = [
         "icon":<CleanHandsOutlined sx={{
             fontSize:"60px"
         }} />,
-        "to":"/admit",
+        "to":"/fee",
         "list":[
             {
                 "name":"New Boarding",

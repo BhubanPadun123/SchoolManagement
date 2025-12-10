@@ -18,6 +18,7 @@ import {
 import {
     downloadAction
 } from "./actions/download.action"
+import formSlice from "./actions/formValue.action"
 
 
 export const Store = configureStore({
@@ -27,7 +28,10 @@ export const Store = configureStore({
         [classRoomAction.reducerPath] : classRoomAction.reducer,
         [admissionAction.reducerPath] : admissionAction.reducer,
         [uploadContentAction.reducerPath] : uploadContentAction.reducer,
-        [downloadAction.reducerPath] : downloadAction.reducer
+        [downloadAction.reducerPath] : downloadAction.reducer,
+        // [formSlice.reducerPath] : formSlice.reducer,
+
+        form:formSlice.reducer
     },
     middleware:(getDefaultMiddleware)=> 
         getDefaultMiddleware().

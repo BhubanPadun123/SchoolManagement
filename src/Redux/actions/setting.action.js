@@ -167,6 +167,12 @@ export const settingAction = createApi({
                 url:"/all_fee",
                 method:"GET"
             })
+        }),
+        useGetAllPlatformsList:builder.query({
+            query:()=> ({
+                url:"/all",
+                method:"GET"
+            })
         })
     })
 })
@@ -194,5 +200,7 @@ export const {
     useCreatePlatformFeeMutation,
     useDeletePlatformFeeMutation,
     useEditPlatformFeeMutation,
-    useLazyGetAllFeeQuery
+    useLazyGetAllFeeQuery,
+
+    useLazyUseGetAllPlatformsListQuery
 } = settingAction
