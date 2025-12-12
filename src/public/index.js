@@ -9,6 +9,7 @@ import NewStudentForm from "./NewStudentRegistration"
 import PublicResults from "./Results"
 import StudentRegistration from "./Registrations"
 import StudentsRegistrationForm from "./StudentRegistrationForm"
+import PublicAdmitCard from "./AdmitCard"
 
 export {
     RegisterStudents,
@@ -21,5 +22,6 @@ export {
     NewStudentForm,
     PublicResults,
     StudentRegistration,
-    StudentsRegistrationForm
+    StudentsRegistrationForm,
+    PublicAdmitCard
 }

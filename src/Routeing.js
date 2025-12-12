@@ -38,7 +38,8 @@ import {
     NewStudentForm,
     PublicResults,
     StudentRegistration,
-    StudentsRegistrationForm
+    StudentsRegistrationForm,
+    PublicAdmitCard
 } from "./public/index"
 import {
     AdminRoot,
@@ -84,6 +85,7 @@ export default function Routing() {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/results" element={<PublicResults/>} />
+                <Route path="/admit" element={<PublicAdmitCard/>} />
                 <Route path="/registration" element={<StudentRegistration/>} />
                 <Route path="/registration/:data" element={<StudentsRegistrationForm/>} />
                 <Route path="/registrations/:institution_id/:class/:link_id" element={<NewStudentForm/>} />

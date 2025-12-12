@@ -32,17 +32,21 @@ import {
     useLazyGetAllinstitutionRegisteredStudentsQuery,
 } from "../Redux/actions/admissionSetup.action"
 import {
-    useDownloadAdmissionRecievedMutation
+    useDownloadAdmissionRecievedMutation,
+    useDownloadAdmissionDocumentMutation
 } from "../Redux/actions/download.action"
 import {
-    useUpdateUserMetadataMutation
+    useUpdateUserMetadataMutation,
+    useLazyUseGetAllPlatformsListQuery,
+    useLazyGetInstitutionMetadataQuery
 } from "../Redux/actions/setting.action"
 import {
     toaster,
     Message
 } from "rsuite"
-import _ from "lodash"
+import _, { find } from "lodash"
 import ManageFee from './components/Fee'
+import { uniqueId } from 'lodash'
 
 const StudentList = ({
     institution_ref,
@@ -63,8 +67,17 @@ const StudentList = ({
     const [getRegisteredStudentAction, getRegisteredStudentState] = useLazyGetAllinstitutionRegisteredStudentsQuery()
     const [downloadAdmissionRecievedAction, downloadAdmissionRecievedState] = useDownloadAdmissionRecievedMutation()
     const [updateUserMetadataAction, updateUserMetadataState] = useUpdateUserMetadataMutation()
+    const [getPlatformAction, getPlatformState] = useLazyUseGetAllPlatformsListQuery()
+    const [getPlatformMetadataAction, getPlatformMetadataState] = useLazyGetInstitutionMetadataQuery()
+    const [downloadAdmissionDocumentAction, downloadAdmissionDocumentState] = useDownloadAdmissionDocumentMutation()
 
 
+    React.useEffect(() => {
+        getPlatformAction()
+        if (institution_ref) {
+            getPlatformMetadataAction(institution_ref)
+        }
+    }, [institution_ref])
     const updateUserMetadataStatus = React.useMemo(() => {
         if (updateUserMetadataState.isSuccess) {
             let message = _.get(updateUserMetadataState, "data.message", "")
@@ -131,15 +144,31 @@ const StudentList = ({
             }
         }
     }, [class_name])
+    const platformList = React.useMemo(() => {
+        if (getPlatformState.isSuccess) {
+            let list = _.get(getPlatformState, "currentData.list", [])
+            return list
+        } else {
+            return []
+        }
+    }, [getPlatformState])
+    const platformMetadata = React.useMemo(() => {
+        if (getPlatformMetadataState.isSuccess) {
+            let data = _.get(getPlatformMetadataState, "currentData.metadata", null)
+            return data
+        } else {
+            return null
+        }
+    }, [getPlatformMetadataState])
 
     const studentList = React.useMemo(() => {
         if (getClassStudentState.isSuccess) {
             const dataList = _.get(getClassStudentState, "currentData", [])
             const findClass = Array.isArray(classes) && classes.length > 0 && classes.find(i => i.class_name === class_name)
             if (findClass && Array.isArray(dataList) && dataList.length > 0) {
-                let findFees = _.get(findClass,"meta_data.feeStructure",[])
+                let findFees = _.get(findClass, "meta_data.feeStructure", [])
                 const list = dataList.map((item, index) => {
-                    let sudentFeeCount = _.get(item,"meta_data.feePayment",[])
+                    let sudentFeeCount = _.get(item, "meta_data.feePayment", [])
                     let student_ref = item.id
                     let students = _.get(findClass, "meta_data.students", [])
                     let rollNoInfo = Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === student_ref)
@@ -150,7 +179,7 @@ const StudentList = ({
                         "Email": item.email,
                         "Class": class_name,
                         "Roll_No": rollNoInfo ? rollNoInfo.roll_no : "No Assign",
-                        "Payment_Count":`${sudentFeeCount.length} / ${findFees.length}`
+                        "Payment_Count": `${sudentFeeCount.length} / ${findFees.length}`
                     }
                 })
                 return list
@@ -179,32 +208,94 @@ const StudentList = ({
         }
     }, [getRegisteredStudentState])
 
+
     function handleDownloadAdmissionRecieved() {
         let findClass = selectedStudent && Array.isArray(classes) && classes.length > 0 && classes.find(i => i.class_name === selectedStudent.Class)
         let students = findClass && _.get(findClass, "meta_data.students", [])
+        let findPlatform = institution_ref && platformList && Array.isArray(platformList) && platformList.find(i => i.id === institution_ref)
         let findStudent = selectedStudent && Array.isArray(students) && students.length > 0 && students.find(i => i.roll_no == selectedStudent.Roll_No)
         let findRegisterStudent = selectedStudent && Array.isArray(registerStudentList) && registerStudentList.length > 0 && registerStudentList.find(i => i.email === selectedStudent.Email)
-        if (institution_ref && findClass && findStudent && findRegisterStudent) {
+        if (findPlatform && findClass && findStudent && findRegisterStudent && platformMetadata) {
             const data = {
-                "school_name": "ABC Public School",
-                "school_address": "123 Main Road, City Name | Phone: 9876543210",
-                "student_name": "John Doe",
-                "class_name": "8th Standard",
-                "application_no": "ADM2025-00125",
-                "submitted_date": "19 Nov 2025",
+                "school_name": findPlatform.name.toUpperCase(),
+                "school_address": `${findPlatform.state},${findPlatform.district},${findPlatform.pin},${findPlatform.address} | Phone: ${_.get(platformMetadata, "meta_data.institutionContact", "")} | Email: ${_.get(platformMetadata, "meta_data.institutionEmail", "")}`,
+                "student_name": `${_.get(findRegisterStudent, "firstname", "")} ${_.get(findRegisterStudent, "lastname", "")}`,
+                "class_name": `${_.get(findClass, "class_name", "")}th Standard`,
+                "application_no": `${_.get(findRegisterStudent, "id", "")}`,
+                "submitted_date": _.get(findRegisterStudent, "created", ""),
                 "review_text": "The admission process was smooth and staff was very friendly."
             }
-            // downloadAdmissionRecievedAction(data)
+            downloadAdmissionRecievedAction(data)
         }
-        console.log({
-            findRegisterStudent,
-            findStudent,
-            findClass
-        })
+    }
+    function generateId(length = 8) {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+    function handleDownloadAdmissionDocument() {
+        let findClass = selectedStudent && Array.isArray(classes) && classes.length > 0 && classes.find(i => i.class_name === selectedStudent.Class)
+        let students = findClass && _.get(findClass, "meta_data.students", [])
+        let findPlatform = institution_ref && platformList && Array.isArray(platformList) && platformList.find(i => i.id === institution_ref)
+        let findStudent = selectedStudent && Array.isArray(students) && students.length > 0 && students.find(i => i.roll_no == selectedStudent.Roll_No)
+        let findRegisterStudent = selectedStudent && Array.isArray(registerStudentList) && registerStudentList.length > 0 && registerStudentList.find(i => i.email === selectedStudent.Email)
+        let studentData = _.get(getClassStudentState, "currentData", [])
+        let student = findStudent && studentData && Array.isArray(studentData) && studentData.find(i => i.id === findStudent.student_ref)
+
+        if (platformMetadata && findClass && findRegisterStudent && findPlatform && findStudent && student) {
+            const data = {
+                "school_name": findPlatform.name.toUpperCase(),
+                "school_address": `${findPlatform.state},${findPlatform.district},${findPlatform.pin},${findPlatform.address} | Phone: ${_.get(platformMetadata, "meta_data.institutionContact", "")} | Email: ${_.get(platformMetadata, "meta_data.institutionEmail", "")}`,
+                "student_name": `${_.get(findRegisterStudent, "firstname", "")} ${_.get(findRegisterStudent, "lastname", "")}`,
+                "class_name": `${_.get(findClass, "class_name", "")}th Standard`,
+                "roll_no": findStudent.roll_no,
+                "fee_items": _.get(student, "meta_data.feePayment", []),
+                "payment_date": `${new Date().getDate()}/${new Date().getMonth()}/${new Date().getFullYear()}`,
+                "receipt_no": generateId()
+            }
+            downloadAdmissionDocumentAction(data)
+        }
     }
 
+    const downloadAdmissionRecievedStatus = React.useMemo(() => {
+        if (downloadAdmissionRecievedState.isSuccess) {
+            const blob = downloadAdmissionRecievedState.data
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = "admission.pdf"
+            a.click()
+            window.URL.revokeObjectURL(url)
+            downloadAdmissionRecievedState.reset()
+        }
+        if (downloadAdmissionRecievedState.isError) {
+            toaster.push(<Message type="warning" >Error while download,please try after sometime.</Message>, { placement: "topCenter" })
+            downloadAdmissionRecievedState.reset()
+        }
+    }, [downloadAdmissionRecievedState])
+    const downloadAdmissionDocumenttatus = React.useMemo(() => {
+        if (downloadAdmissionDocumentState.isSuccess) {
+            const blob = downloadAdmissionDocumentState.data
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = "admission.pdf"
+            a.click()
+            window.URL.revokeObjectURL(url)
+            downloadAdmissionDocumentState.reset()
+        }
+        if (downloadAdmissionDocumentState.isError) {
+            toaster.push(<Message type="warning" >Error while download,please try after sometime.</Message>, { placement: "topCenter" })
+            downloadAdmissionDocumentState.reset()
+        }
+    }, [downloadAdmissionDocumentState])
+
     const updateClass = updateClassMetadataStatus
-    const updateUser= updateUserMetadataStatus
+    const updateUser = updateUserMetadataStatus
+
 
 
 
@@ -213,7 +304,7 @@ const StudentList = ({
             width: "100%"
         }}>
             <CTable
-                header={["SL_No", "First_Name", "Last_Name", "Email", "Class", "Roll_No","Payment_Count"]}
+                header={["SL_No", "First_Name", "Last_Name", "Email", "Class", "Roll_No", "Payment_Count"]}
                 rows={studentList}
                 onRowClick={(e) => {
                     setSelectedStudent(e)
@@ -282,7 +373,7 @@ const StudentList = ({
                             } else {
                                 let meta_data = {
                                     ...student.meta_data,
-                                    feePayment: [...isExistFee,...e]
+                                    feePayment: [...isExistFee, ...e]
                                 }
                                 student.meta_data = meta_data
                                 updateUserMetadataAction({
@@ -512,6 +603,7 @@ const StudentList = ({
                                 sx={{
                                     color: "#FFFF"
                                 }}
+                                onClick={handleDownloadAdmissionDocument}
                             >
                                 Admission Documents
                             </Button>
@@ -526,7 +618,10 @@ const StudentList = ({
                     getClassesState.isLoading ||
                     getRegisteredStudentState.isLoading ||
                     downloadAdmissionRecievedState.isLoading ||
-                    updateUserMetadataState.isLoading
+                    updateUserMetadataState.isLoading ||
+                    getPlatformState.isLoading ||
+                    getPlatformMetadataState.isLoading ||
+                    downloadAdmissionDocumentState.isLoading
                 ) && (
                     <Loader show={true} />
                 )

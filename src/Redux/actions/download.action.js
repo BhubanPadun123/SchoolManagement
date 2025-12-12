@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseUrl, api_service_path } from "./utils"
+import { data } from "autoprefixer";
 
 export const downloadAction = createApi({
     reducerPath:"downloadApi",
@@ -21,7 +22,24 @@ export const downloadAction = createApi({
             query:(data)=> ({
                 url:`/admission_recieved`,
                 method:"POST",
-                body:data
+                body:data,
+                responseHandler:(response)=> response.blob()
+            })
+        }),
+        downloadAdmissionDocument:builder.mutation({
+            query:(data)=> ({
+                url:"/admission_fee_receipt",
+                method:"POST",
+                body:data,
+                responseHandler:(response)=> response.blob()
+            })
+        }),
+        downloadAdmitCard:builder.mutation({
+            query:(data)=> ({
+                url:"/admit",
+                method:"POST",
+                body:data,
+                responseHandler:(response)=> response.blob()
             })
         })
     })
@@ -29,5 +47,7 @@ export const downloadAction = createApi({
 
 export const {
     useLazyDownloadRegisterStudentsQuery,
-    useDownloadAdmissionRecievedMutation
+    useDownloadAdmissionRecievedMutation,
+    useDownloadAdmissionDocumentMutation,
+    useDownloadAdmitCardMutation
 } = downloadAction

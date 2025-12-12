@@ -30,6 +30,7 @@ const publicRoutes = [
     {name:"Home",path:"/"},
     {name:"Services",path:"/service"},
     {name:"Result",path:"/results"},
+    {name:"Admit Card",path:"/admit"},
     {name:"Registration",path:"/registration"},
     {name:"Login",path:"/auth"},
 ]
