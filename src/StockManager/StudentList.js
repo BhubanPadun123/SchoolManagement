@@ -169,9 +169,9 @@ const StudentList = ({
                 let findFees = _.get(findClass, "meta_data.feeStructure", [])
                 const list = dataList.map((item, index) => {
                     let sudentFeeCount = _.get(item, "meta_data.feePayment", [])
-                    let student_ref = item.id
+                    let student_ref = item.email
                     let students = _.get(findClass, "meta_data.students", [])
-                    let rollNoInfo = Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === student_ref)
+                    let rollNoInfo = Array.isArray(students) && students.length > 0 && students.find(i => i.email === student_ref)
                     return {
                         "SL_No": index + 1,
                         "First_Name": item.firstname,
@@ -243,15 +243,20 @@ const StudentList = ({
         let findStudent = selectedStudent && Array.isArray(students) && students.length > 0 && students.find(i => i.roll_no == selectedStudent.Roll_No)
         let findRegisterStudent = selectedStudent && Array.isArray(registerStudentList) && registerStudentList.length > 0 && registerStudentList.find(i => i.email === selectedStudent.Email)
         let studentData = _.get(getClassStudentState, "currentData", [])
-        let student = findStudent && studentData && Array.isArray(studentData) && studentData.find(i => i.id === findStudent.student_ref)
+        let student = findStudent && studentData && Array.isArray(studentData) && studentData.find(i => i.email === findStudent.email)
 
+        console.log({
+            findStudent,
+            studentData,
+            findRegisterStudent
+        })
         if (platformMetadata && findClass && findRegisterStudent && findPlatform && findStudent && student) {
             const data = {
                 "school_name": findPlatform.name.toUpperCase(),
                 "school_address": `${findPlatform.state},${findPlatform.district},${findPlatform.pin},${findPlatform.address} | Phone: ${_.get(platformMetadata, "meta_data.institutionContact", "")} | Email: ${_.get(platformMetadata, "meta_data.institutionEmail", "")}`,
                 "student_name": `${_.get(findRegisterStudent, "firstname", "")} ${_.get(findRegisterStudent, "lastname", "")}`,
                 "class_name": `${_.get(findClass, "class_name", "")}th Standard`,
-                "roll_no": findStudent.roll_no,
+                "roll_no": `${findStudent.roll_no}`,
                 "fee_items": _.get(student, "meta_data.feePayment", []),
                 "payment_date": `${new Date().getDate()}/${new Date().getMonth()}/${new Date().getFullYear()}`,
                 "receipt_no": generateId()
@@ -472,24 +477,27 @@ const StudentList = ({
                                     let students = _.get(findClass, "meta_data.students", [])
                                     let findStudent = dataList.find(i => i.email === selectedStudent.Email)
                                     let studentRegistrationLink = Array.isArray(registerStudentList) && registerStudentList.length > 0 && registerStudentList.find(i => i.email === selectedStudent.Email)
-                                    let isExistRollNo = studentRegistrationLink && Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === studentRegistrationLink.id)
+                                    let isExistRollNo = studentRegistrationLink && Array.isArray(students) && students.length > 0 && students.find(i => i.email === studentRegistrationLink.email)
 
                                     let updatedStudent = isExistRollNo ? Array.isArray(students) && students.length > 0 && studentRegistrationLink && students.map((item) => {
-                                        if (item.student_ref === studentRegistrationLink.id) {
+                                        if (item.email === studentRegistrationLink.email) {
                                             return {
                                                 "roll_no": rollNo,
-                                                "student_ref": findStudent.id
+                                                "registration_ref": studentRegistrationLink.id,
+                                                "email": selectedStudent.Email
                                             }
                                         } else {
                                             return item
                                         }
-                                    }) : [
-                                        ...students,
-                                        {
-                                            "roll_no": rollNo,
-                                            "student_ref": findStudent.id
-                                        }
-                                    ]
+                                    }) : Array.isArray(students) && students.length > 0 && students.map((st) => {
+                                        if (!st.email || st.email === studentRegistrationLink.email) {
+                                            return {
+                                                "roll_no": rollNo,
+                                                "registration_ref": studentRegistrationLink.id,
+                                                "email": selectedStudent.Email
+                                            }
+                                        }else return st
+                                    })
                                     let meta_data = {
                                         ...findClass.meta_data,
                                         "students": [

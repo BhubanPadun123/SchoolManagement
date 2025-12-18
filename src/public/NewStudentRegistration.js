@@ -25,7 +25,8 @@ import {
     EngineeringOutlined,
     PhoneInTalkOutlined,
     AddLocationOutlined,
-    Check
+    Check,
+    Email
 } from "@mui/icons-material"
 import { Others } from "@rsuite/icons"
 import {
@@ -33,18 +34,24 @@ import {
 } from "../components/index"
 import {
     useLazyGetInstitutionMetadataQuery,
-    useLazyGetUserInstitutionQuery
+    useLazyGetUserInstitutionQuery,
+    useLazyGetAllFeeQuery,
 } from "../Redux/actions/setting.action"
 import {
-    useLazyGetAllAdmissionLinkQuery
+    useLazyGetAllAdmissionLinkQuery,
+    useRegisterStudentMutation
 } from "../Redux/actions/admissionSetup.action"
 import {
     useUploadImageMutation
 } from "../Redux/actions/upload_content"
-import {updateFields,resetForm} from "../Redux/actions/formValue.action"
-import { useDispatch,useSelector } from "react-redux"
+import {
+    useLazyGetInstitutionClassesQuery
+} from "../Redux/actions/classSetup.action"
+import { updateFields, resetForm } from "../Redux/actions/formValue.action"
+import { useDispatch, useSelector } from "react-redux"
 import { useParams } from "react-router-dom"
 import _ from "lodash"
+import { Message, toaster } from "rsuite"
 
 
 const useStyles = makeStyles(() => ({
@@ -74,10 +81,10 @@ export default function RegistrationForm() {
     const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const params = useParams()
 
-    const [selectedImage,setImage] = React.useState(null)
-    const [selectedDOB,setSelectedDOB] = React.useState(null)
-    const [isUploadImage,setIsUploadImage] = React.useState(null)
-    const [isUploadDOB,setIsuploadDOB] = React.useState(null)
+    const [selectedImage, setImage] = React.useState(null)
+    const [selectedDOB, setSelectedDOB] = React.useState(null)
+    const [isUploadImage, setIsUploadImage] = React.useState(null)
+    const [isUploadDOB, setIsuploadDOB] = React.useState(null)
 
     const class_ref = _.get(params, "class", null)
     const institution_id = _.get(params, "institution_id", null)
@@ -86,11 +93,13 @@ export default function RegistrationForm() {
 
     const [getAllLinkAction, getAllLinkState] = useLazyGetAllAdmissionLinkQuery()
     const [getPlatformAction, getPlatformState] = useLazyGetUserInstitutionQuery()
-    const [uploadAction,uploadState] = useUploadImageMutation()
+    const [uploadAction, uploadState] = useUploadImageMutation()
     const [getPlatformMetaDataAction, getPlatformMetadataState] = useLazyGetInstitutionMetadataQuery()
+    const [registerAction,registerState] = useRegisterStudentMutation()
+    const [getClassesAction,getClassesState] = useLazyGetInstitutionClassesQuery()
 
-    const {form} = useSelector((state)=> state)
-    
+    const { form } = useSelector((state) => state)
+
 
 
     React.useEffect(() => {
@@ -99,8 +108,9 @@ export default function RegistrationForm() {
                 institution_ref: institution_id
             })
             getPlatformAction(institution_id)
+            getClassesAction({institution_ref:institution_id})
         }
-        return ()=> {
+        return () => {
             dispatch(resetForm())
         }
     }, [class_ref, institution_id, link_id])
@@ -133,55 +143,64 @@ export default function RegistrationForm() {
             return null
         }
     }, [getPlatformState])
-    const uploadData = React.useMemo(()=>{
-        if(uploadState.isSuccess){
-            return{
-                ..._.get(uploadState,"originalArgs.file",{})
-            }
-        }else{
-            return null
-        }
-    },[uploadState])
 
-    React.useEffect(()=>{
-        if(uploadData && Object.entries(uploadData).length > 0){
-            if(selectedDOB){
-                let selectedFileName = _.get(selectedDOB,"name",null)
-                let uploadedFileName = _.get(uploadData,"name",null)
-                if(selectedFileName && uploadedFileName && selectedFileName === uploadedFileName){
+
+    React.useEffect(() => {
+        if (uploadState.isSuccess) {
+            if (selectedDOB) {
+                let selectedFileName = _.get(selectedDOB, "name", null)
+                let uploadedFileName = _.get(uploadState, "originalArgs.file.name", {})
+                if (selectedFileName && uploadedFileName && selectedFileName === uploadedFileName) {
                     setIsuploadDOB(true)
-                    let imgData = _.get(uploadState,"data",null)
+                    let imgData = _.get(uploadState, "data", null)
                     setSelectedDOB(imgData)
+                    const images = _.get(form, "state.images", {})
+                    dispatch(updateFields({
+                        images: {
+                            ...images,
+                            dob: imgData
+                        }
+                    }))
                 }
             }
-            if(selectedImage){
-                let selectedFileName = _.get(selectedImage,"name",null)
-                let uploadedFileName = _.get(uploadData,"name",null)
-                if(selectedFileName && uploadedFileName && selectedFileName === uploadedFileName){
+            if (selectedImage) {
+                let selectedFileName = _.get(selectedImage, "name", null)
+                let uploadedFileName = _.get(uploadState, "originalArgs.file.name", {})
+                if (selectedFileName && uploadedFileName && selectedFileName === uploadedFileName) {
                     setIsUploadImage(true)
-                    let imgData = _.get(uploadState,"data",null)
+                    let imgData = _.get(uploadState, "data", null)
                     setImage(imgData)
+                    const images = _.get(form, "state.images", {})
+                    dispatch(updateFields({
+                        images: {
+                            ...images,
+                            photo: imgData
+                        }
+                    }))
                 }
             }
         }
-    },[uploadData])
+    }, [uploadState])
 
-    function handleSubmit(){
-        let firstname = _.get(form,"state.firstname",null)
-        let lastname = _.get(form,"state.lastname",null)
-        let district = _.get(form,"state.district",null)
-        let dob = _.get(form,"state.dob",null)
-        let fatherName = _.get(form,"state.fatherName",null)
-        let fatherOccupation = _.get(form,"state.fatherOccupation",null)
-        let gender = _.get(form,"state.gender",null)
-        let motherName = _.get(form,"state.motherName",null)
-        let motherOccupation = _.get(form,"state.motherOccupation",null)
-        let pContactNumber = _.get(form,"state.pContactNumber",null)
-        let pinCode = _.get(form,"state.pinCode",null)
-        let po = _.get(form,"state.po",null)
-        let state = _.get(form,"state.state",null)
-        let village = _.get(form,"state.village",null)
-        console.log({
+    function handleSubmit() {
+        let firstname = _.get(form, "state.firstname", null)
+        let lastname = _.get(form, "state.lastname", null)
+        let district = _.get(form, "state.district", null)
+        let dob = _.get(form, "state.dob", null)
+        let fatherName = _.get(form, "state.fatherName", null)
+        let fatherOccupation = _.get(form, "state.fatherOccupation", null)
+        let gender = _.get(form, "state.gender", null)
+        let motherName = _.get(form, "state.motherName", null)
+        let motherOccupation = _.get(form, "state.motherOccupation", null)
+        let pContactNumber = _.get(form, "state.pContactNumber", null)
+        let pinCode = _.get(form, "state.pinCode", null)
+        let po = _.get(form, "state.po", null)
+        let state = _.get(form, "state.state", null)
+        let village = _.get(form, "state.village", null)
+        let photo = _.get(form,"state.images.photo",null)
+        let dobCerfiticate = _.get(form,"state.images.dob",null)
+        let email = _.get(form,"state.email",null)
+        const data = {
             village,
             state,
             po,
@@ -195,9 +214,47 @@ export default function RegistrationForm() {
             dob,
             firstname,
             lastname,
-            district
+            district,
+            photo:photo ? JSON.stringify(photo) : "",
+            dobCerfiticate : dobCerfiticate ? JSON.stringify(dobCerfiticate) : "",
+            email
+        }
+        console.log(data)
+        let isMissing = false
+        Object.entries(data).map(([key, val]) => {
+            if (!val) {
+                toaster.push(<Message>{`${key} field value is missing`}</Message>)
+                isMissing = true
+            }
+        })
+        if (isMissing) return
+        registerAction({
+            firstname:firstname,
+            lastname:lastname,
+            fathername:fatherName,
+            mothername:motherName,
+            cnumber:"not",
+            pnumber:pContactNumber,
+            email:email,
+            fatherOccupation:fatherOccupation,
+            motherOccupation:motherOccupation,
+            age:dob,
+            gender:gender,
+            lastExamination:"not provide",
+            year:"not provide",
+            division:"not provide",
+            markObtain:"not provide",
+            meta_data:{
+                user_type:"student",
+                user_platform:institution_id,
+                photo:photo ? JSON.stringify(photo) : "",
+                dobCerfiticate:dobCerfiticate ? JSON.stringify(dobCerfiticate) : ""
+            },
+            class_ref:class_ref,
+            institution_ref:institution_id
         })
     }
+
 
 
     if (!isLinkExist || !platformData) {
@@ -287,11 +344,11 @@ export default function RegistrationForm() {
                             <Person />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let firstname = e.target.value
-                        dispatch(updateFields({firstname:firstname}))
+                        dispatch(updateFields({ firstname: firstname }))
                     }}
-                    value={_.get(form,"state.firstname","")}
+                    value={_.get(form, "state.firstname", "")}
                 />
                 <TextField
                     placeholder="Enter Last Name"
@@ -305,11 +362,29 @@ export default function RegistrationForm() {
                             <PersonAddAlt />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let lastname = e.target.value
-                        dispatch(updateFields({lastname:lastname}))
+                        dispatch(updateFields({ lastname: lastname }))
                     }}
-                    value={_.get(form,"state.lastname","")}
+                    value={_.get(form, "state.lastname", "")}
+                />
+                <TextField
+                    placeholder="Enter Email Address"
+                    variant="outlined"
+                    focused
+                    sx={{
+                        width: isMobile ? "100%" : "50%"
+                    }}
+                    InputProps={{
+                        endAdornment: (
+                            <Email />
+                        )
+                    }}
+                    onChange={(e) => {
+                        let email = e.target.value
+                        dispatch(updateFields({ email: email }))
+                    }}
+                    value={_.get(form, "state.email", "")}
                 />
                 <TextField
                     placeholder="Enter DOB"
@@ -319,22 +394,22 @@ export default function RegistrationForm() {
                         width: isMobile ? "100%" : "50%"
                     }}
                     type="date"
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let dob = e.target.value
-                        dispatch(updateFields({dob:dob}))
+                        dispatch(updateFields({ dob: dob }))
                     }}
-                    value={_.get(form,"state.dob","")}
+                    value={_.get(form, "state.dob", "")}
                 />
                 <FormControl sx={{
                     width: isMobile ? "100%" : "50%"
                 }}>
                     <InputLabel>Select Gender</InputLabel>
                     <Select
-                        value={_.get(form,"state.gender","")}
+                        value={_.get(form, "state.gender", "")}
                         label={"Select Gender"}
-                        onChange={(e)=> {
+                        onChange={(e) => {
                             let gender = e.target.value
-                            dispatch(updateFields({gender:gender}))
+                            dispatch(updateFields({ gender: gender }))
                         }}
                     >
                         <MenuItem value={"male"} className={classes.menuItem} >
@@ -377,11 +452,11 @@ export default function RegistrationForm() {
                             <Male />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let fatherName = e.target.value
-                        dispatch(updateFields({fatherName:fatherName}))
+                        dispatch(updateFields({ fatherName: fatherName }))
                     }}
-                    value={_.get(form,"state.fatherName")}
+                    value={_.get(form, "state.fatherName")}
                 />
                 <TextField
                     placeholder="Enter Mother Name"
@@ -394,11 +469,11 @@ export default function RegistrationForm() {
                             <Female />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let motherName = e.target.value
-                        dispatch(updateFields({motherName:motherName}))
+                        dispatch(updateFields({ motherName: motherName }))
                     }}
-                    value={_.get(form,"state.motherName","")}
+                    value={_.get(form, "state.motherName", "")}
                 />
                 <TextField
                     placeholder="Enter Father Occupation"
@@ -411,11 +486,11 @@ export default function RegistrationForm() {
                             <EngineeringOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let fatherOccupation = e.target.value
-                        dispatch(updateFields({fatherOccupation:fatherOccupation}))
+                        dispatch(updateFields({ fatherOccupation: fatherOccupation }))
                     }}
-                    value={_.get(form,"state.fatherOccupation")}
+                    value={_.get(form, "state.fatherOccupation")}
                 />
                 <TextField
                     placeholder="Enter Mother Occupation"
@@ -428,11 +503,11 @@ export default function RegistrationForm() {
                             <EngineeringOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let motherOccupation = e.target.value
-                        dispatch(updateFields({motherOccupation:motherOccupation}))
+                        dispatch(updateFields({ motherOccupation: motherOccupation }))
                     }}
-                    value={_.get(form,"state.motherOccupation","")}
+                    value={_.get(form, "state.motherOccupation", "")}
                 />
                 <TextField
                     placeholder="Enter Father or Mother Contact Number"
@@ -451,11 +526,11 @@ export default function RegistrationForm() {
                         )
                     }}
                     type="number"
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let pContactNumber = e.target.value
-                        dispatch(updateFields({pContactNumber:pContactNumber}))
+                        dispatch(updateFields({ pContactNumber: pContactNumber }))
                     }}
-                    value={_.get(form,"state.pContactNumber","")}
+                    value={_.get(form, "state.pContactNumber", "")}
                 />
             </div>
             <div style={{
@@ -479,11 +554,11 @@ export default function RegistrationForm() {
                             <AddLocationOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let state = e.target.value
-                        dispatch(updateFields({state:state}))
+                        dispatch(updateFields({ state: state }))
                     }}
-                    value={_.get(form,"state.state","")}
+                    value={_.get(form, "state.state", "")}
                 />
                 <TextField
                     placeholder="Enter District Name"
@@ -496,11 +571,11 @@ export default function RegistrationForm() {
                             <AddLocationOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let district = e.target.value
-                        dispatch(updateFields({district:district}))
+                        dispatch(updateFields({ district: district }))
                     }}
-                    value={_.get(form,"state.district","")}
+                    value={_.get(form, "state.district", "")}
                 />
                 <TextField
                     placeholder="Enter PO"
@@ -513,11 +588,11 @@ export default function RegistrationForm() {
                             <AddLocationOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let po = e.target.value
-                        dispatch(updateFields({po:po}))
+                        dispatch(updateFields({ po: po }))
                     }}
-                    value={_.get(form,"state.po","")}
+                    value={_.get(form, "state.po", "")}
                 />
                 <TextField
                     placeholder="Enter PinCode"
@@ -531,11 +606,11 @@ export default function RegistrationForm() {
                         )
                     }}
                     type="number"
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let pinCode = e.target.value
-                        dispatch(updateFields({pinCode:pinCode}))
+                        dispatch(updateFields({ pinCode: pinCode }))
                     }}
-                    value={_.get(form,"state.pinCode","")}
+                    value={_.get(form, "state.pinCode", "")}
                 />
                 <TextField
                     placeholder="Enter Village Name"
@@ -548,11 +623,11 @@ export default function RegistrationForm() {
                             <AddLocationOutlined />
                         )
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let village = e.target.value
-                        dispatch(updateFields({village:village}))
+                        dispatch(updateFields({ village: village }))
                     }}
-                    value={_.get(form,"state.village","")}
+                    value={_.get(form, "state.village", "")}
                 />
             </div>
             <div style={{
@@ -586,11 +661,11 @@ export default function RegistrationForm() {
                     inputProps={{
                         accept: "image/*"
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         const file = e.target.files[0]
                         setImage(file)
                         // setSelectedDOB(null)
-                        uploadAction({file})
+                        uploadAction({ file })
                     }}
                 />
                 <TextField
@@ -616,16 +691,16 @@ export default function RegistrationForm() {
                     inputProps={{
                         accept: "application/pdf"
                     }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         const file = e.target.files[0]
                         setSelectedDOB(file)
                         // setImage(null)
-                        uploadAction({file})
+                        uploadAction({ file })
                     }}
                 />
                 <Button
-                   variant="contained"
-                   onClick={handleSubmit}
+                    variant="contained"
+                    onClick={handleSubmit}
                 >
                     Submit
                 </Button>
@@ -634,7 +709,9 @@ export default function RegistrationForm() {
                 (
                     getAllLinkState.isLoading ||
                     getPlatformState.isLoading ||
-                    uploadState.isLoading
+                    uploadState.isLoading ||
+                    registerState.isLoading ||
+                    getClassesState.isLoading
                 ) && (
                     <Loader show={true} />
                 )

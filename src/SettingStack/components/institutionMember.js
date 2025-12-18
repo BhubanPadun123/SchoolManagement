@@ -137,7 +137,14 @@ function InstitutionMembers({ institutionBasicInfo, institutionMetadata, user })
     const platformUserListStatus = useMemo(() => {
         if (getUserListState.isSuccess && Array.isArray(stuffsEmailList) && stuffsEmailList.length > 0) {
             let allUserList = _.get(getUserListState,"currentData.list",[])
-            let finalList = Array.isArray(allUserList) && allUserList.length > 0 && allUserList.filter((item) => stuffsEmailList.includes(item.email))
+            let finalList = Array.isArray(allUserList) && allUserList.length > 0 && allUserList.filter((item) => {
+                let designation = _.get(item,"meta_data.designation","")
+                if(designation !== "student"){
+                    return item
+                }else {
+                    return null
+                }
+            }).filter(i => i)
             return finalList
         }
         else if (getUserListState.isError) {

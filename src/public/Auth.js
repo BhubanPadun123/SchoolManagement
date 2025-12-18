@@ -13,7 +13,7 @@ import {
 } from "rsuite"
 import _ from "lodash"
 import { Typography } from "@mui/material"
-import {useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -22,15 +22,22 @@ export default function LoginPage() {
         type: "",
         message: ""
     })
-    const [email,setEmail] = React.useState("")
-    const [new_password,setNewpassword] = React.useState("")
+    const [email, setEmail] = React.useState("")
+    const [new_password, setNewpassword] = React.useState("")
     const [platformName, setPlatformName] = React.useState("")
     const [checkUserAction, checkUserState] = useLazyCheckUserPlatformQuery()
-    const [resetPasswordAction,resetPasswordState] = useResetPasswordMutation()
+    const [resetPasswordAction, resetPasswordState] = useResetPasswordMutation()
 
     const checkUserStatus = React.useMemo(() => {
         if (checkUserState.isSuccess) {
             const name = _.get(checkUserState, "currentData.platform_name", null)
+            if (!name) {
+                return {
+                    show: true,
+                    type: "info",
+                    message: "Institution not found!,please connect with authority"
+                }
+            }
             setPlatformName(name)
             return {
                 show: true,
@@ -51,20 +58,20 @@ export default function LoginPage() {
     React.useEffect(() => {
         if (checkUserStatus) {
             setNotification(checkUserStatus)
-            if(checkUserStatus.type === "success"){
-                navigate("/login")
-            }
+            // if(checkUserStatus.type === "success"){
+            //     navigate("/login")
+            // }
         }
     }, [checkUserStatus])
 
-    function handleResetPass(){
-        if(!email || !new_password){
-            toaster.push(<Message type="info" >Please fill the email and password!</Message>,{placement:"topCenter"})
+    function handleResetPass() {
+        if (!email || !new_password) {
+            toaster.push(<Message type="info" >Please fill the email and password!</Message>, { placement: "topCenter" })
             return
         }
         resetPasswordAction({
-            email:email,
-            new_password:new_password
+            email: email,
+            new_password: new_password
         })
     }
 
@@ -77,21 +84,21 @@ export default function LoginPage() {
                 {
                     platformName ? (
                         <div>
-                            <Typography variant="h4" 
-                            onClick={()=> {
-                                navigate("/login")
-                            }}
-                            sx={{
-                                textAlign:"center",
-                                fontFamily:"Lato",
-                                fontWeight:400,
-                                fontStyle:"normal",
-                                border:"1px solid gray",
-                                borderRadius:8,
-                                backgroundColor:"violet",
-                                cursor:"pointer",
-                                color:"#FFFF"
-                            }}>{platformName}</Typography>
+                            <Typography variant="h4"
+                                onClick={() => {
+                                    navigate("/login")
+                                }}
+                                sx={{
+                                    textAlign: "center",
+                                    fontFamily: "Lato",
+                                    fontWeight: 400,
+                                    fontStyle: "normal",
+                                    border: "1px solid gray",
+                                    borderRadius: 8,
+                                    backgroundColor: "violet",
+                                    cursor: "pointer",
+                                    color: "#FFFF"
+                                }}>{platformName}</Typography>
                         </div>
                     ) : (
                         <form className="space-y-6" onSubmit={(e) => {

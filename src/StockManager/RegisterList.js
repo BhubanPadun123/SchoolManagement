@@ -44,11 +44,11 @@ const styles = {
 
 const CustomInputGroupWidthButton = ({ placeholder, ...props }) => (
     <InputGroup {...props} inside style={styles}>
-        <Input placeholder={placeholder} onChange={props.handleSearch} />
+        <Input placeholder={placeholder} onChange={props.handleSearch} value={props.value} />
         <InputGroup.Button>
             <SearchIcon />
         </InputGroup.Button>
-        <InputGroup.Button onClick={props.handleDownload}>
+        <InputGroup.Button onClick={props.onClear}>
             <Tooltip title={"Clear All"} arrow placement="bottom" >
                 <ClearOutlined fontSize="10" />
             </Tooltip>
@@ -59,33 +59,35 @@ const CustomInputGroupWidthButton = ({ placeholder, ...props }) => (
             </Tooltip>
         </InputGroup.Button>
     </InputGroup>
-);
+)
 
 function RegisterStudentList({
     studentsList = [],
     updateRegistrationAction,
     classList,
     institution_ref
-}){
+}) {
     const { class_name } = useParams()
     const [selectedStudent, setSelectedStudent] = useState(null)
     const [showModal, setShowModal] = useState(false)
+    const [searchQuery,setSearchQuery] = useState("")
+    const [finalList,setFinalList] = useState(studentsList || [])
 
     const [downloadStudentListAction, downloadStudentListState] = useLazyDownloadRegisterStudentsQuery()
     const [updateClassMetadataAction, updateClassMetadataState] = useUpdateClassMetadataMutation()
     const [getClassStudentsAction, getClassStudentState] = useLazyGetClassStudentsListQuery()
 
-    React.useEffect(()=>{
+    React.useEffect(() => {
         fetchClassStudents()
-    },[class_name,institution_ref,classList])
+    }, [class_name, institution_ref, classList])
 
-    async function fetchClassStudents(){
-        if(Array.isArray(classList.list) && classList.list.length > 0 && class_name && institution_ref){
+    async function fetchClassStudents() {
+        if (Array.isArray(classList.list) && classList.list.length > 0 && class_name && institution_ref) {
             let findClass = classList.list.find(i => i.class_name === class_name)
-            if(findClass){
+            if (findClass) {
                 getClassStudentsAction({
-                    institution_ref:institution_ref,
-                    class_id:findClass.id
+                    institution_ref: institution_ref,
+                    class_id: findClass.id
                 })
             }
         }
@@ -131,13 +133,13 @@ function RegisterStudentList({
             toaster.push(
                 <Message type="error">Failed to download Excel. Please try again.</Message>,
                 { placement: "topCenter" }
-            );
+            )
         }
     }
 
 
-    const list = Array.isArray(studentsList) && studentsList.length > 0 &&
-        studentsList.map((item, index) => {
+    const list = Array.isArray(finalList) && finalList.length > 0 &&
+        finalList.map((item, index) => {
             return {
                 "ID": item.id,
                 "Class_ref": item.class_ref,
@@ -154,15 +156,15 @@ function RegisterStudentList({
 
     let tempList = Array.isArray(list) && list.filter((i) => i && i.Status !== "admitted" && i)
 
-    if (!Array.isArray(tempList) || tempList.length === 0) {
-        return (
-            <div>
-                <h1 style={{
-                    textAlign: "center"
-                }}>List Empty!</h1>
-            </div>
-        )
-    }
+    // if (!Array.isArray(tempList) || tempList.length === 0) {
+    //     return (
+    //         <div>
+    //             <h1 style={{
+    //                 textAlign: "center"
+    //             }}>List Empty!</h1>
+    //         </div>
+    //     )
+    // }
 
     const handleClose = () => {
         setShowModal(false)
@@ -183,31 +185,12 @@ function RegisterStudentList({
         if (type === "admitted" && classList && classList.hasOwnProperty('list') && Array.isArray(classList.list)) {
             const findClass = classList.list.find(i => i.class_name === class_name)
             if (findClass) {
-                let students = _.get(findClass, "meta_data.students", [])
-                let isStudentExist = Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === selectedStudent.id)
-                if (findClass.meta_data && findClass.meta_data.hasOwnProperty("admitted")) {
-
-                    const meta_data = {
-                        ...findClass.meta_data,
-                        "admitted": findClass.meta_data.admitted + 1,
-                        "students": isStudentExist && students ? [...findClass.meta_data.students] : [
-                            ...findClass.meta_data.students,
-                            {
-                                "student_ref": selectedStudent.id,
-                                "roll_no": findClass.meta_data.admitted + 1
-                            }
-                        ]
-                    }
-                    updateClassMetadataAction({
-                        class_id: findClass.id,
-                        meta_data: meta_data
-                    })
-                } else {
+                let students = _.get(findClass, "meta_data.students", null)
+                if (!students) {
                     const meta_data = {
                         ...findClass.meta_data,
                         "admitted": 1,
-                        "students": isStudentExist ? [...findClass.meta_data.students] : [
-                            ...findClass.meta_data.students,
+                        "students": [
                             {
                                 "student_ref": selectedStudent.id,
                                 "roll_no": 1
@@ -218,6 +201,43 @@ function RegisterStudentList({
                         class_id: findClass.id,
                         meta_data: meta_data
                     })
+                } else {
+                    let isStudentExist = Array.isArray(students) && students.length > 0 && students.find(i => i.student_ref === selectedStudent.id)
+                    if (findClass.meta_data && findClass.meta_data.hasOwnProperty("admitted") && isStudentExist) {
+
+                        const meta_data = {
+                            ...findClass.meta_data,
+                            "admitted": findClass.meta_data.admitted + 1,
+                            "students": isStudentExist && students ? [...findClass.meta_data.students] : [
+                                ...findClass.meta_data.students,
+                                {
+                                    "student_ref": selectedStudent.id,
+                                    "roll_no": findClass.meta_data.admitted + 1
+                                }
+                            ]
+                        }
+                        updateClassMetadataAction({
+                            class_id: findClass.id,
+                            meta_data: meta_data
+                        })
+                    } else {
+                        const meta_data = {
+                            ...findClass.meta_data,
+                            "admitted": findClass.meta_data.admitted + 1,
+                            "students": isStudentExist ? [...findClass.meta_data.students] : [
+                                ...findClass.meta_data.students,
+                                {
+                                    "registration_ref": selectedStudent.id,
+                                    "roll_no": findClass.meta_data.admitted + 1,
+                                    "email": selectedStudent.email
+                                }
+                            ]
+                        }
+                        updateClassMetadataAction({
+                            class_id: findClass.id,
+                            meta_data: meta_data
+                        })
+                    }
                 }
             }
         }
@@ -225,8 +245,22 @@ function RegisterStudentList({
         setShowModal(false)
     }
     function handleSearch(e) {
-        console.log(studentsList, "<<<<<<<")
-        // const filterList = Array.isArray(tempList) && tempList.length > 0 && tempList.filter(i => i.)
+        let searchList = Array.isArray(studentsList) && studentsList.length > 0 && studentsList.filter((item) => {
+            let status = _.get(item, "meta_data.status", null)
+            if (!status) {
+                return item
+            } else {
+                return null
+            }
+        }).filter(i => i)
+
+        const filterList = searchList.filter(i =>
+            i.email?.toLowerCase().includes(e.toLowerCase()) ||
+            i.firstname?.toLowerCase().includes(e.toLowerCase())
+        )
+        
+        setSearchQuery(e)
+        setFinalList(Array.isArray(filterList) && filterList.length > 0 ? filterList : [])
     }
 
     return (
@@ -246,6 +280,11 @@ function RegisterStudentList({
                         placeholder="Search by gmail"
                         handleDownload={handleDownload}
                         handleSearch={handleSearch}
+                        value={searchQuery}
+                        onClear={()=>{
+                            setSearchQuery("")
+                            setFinalList(studentsList)
+                        }}
                     />
                 </Col>
             </div>

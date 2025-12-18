@@ -13,9 +13,10 @@ import {
 import MenuIcon from "@mui/icons-material/Menu"
 import { useTheme } from "@mui/material/styles"
 import useMediaQuery from "@mui/material/useMediaQuery"
-import { useNavigate,useLocation } from "react-router-dom"
-import {GetCurrentUser} from "../utils/hooks"
-import {AddOutline, Admin} from "@rsuite/icons"
+import { useNavigate, useLocation } from "react-router-dom"
+import { GetCurrentUser } from "../utils/hooks"
+import { AddOutline, Admin } from "@rsuite/icons"
+import _ from "lodash"
 
 const routesList = [
     { name: "Home", path: "/" },
@@ -23,35 +24,35 @@ const routesList = [
     { name: "Setting", path: "/setting" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    {name:"Admin",path:"/admin"},
+    { name: "Admin", path: "/admin" },
     { name: "Login", path: "/auth" },
 ]
 const publicRoutes = [
-    {name:"Home",path:"/"},
-    {name:"Services",path:"/service"},
-    {name:"Result",path:"/results"},
-    {name:"Admit Card",path:"/admit"},
-    {name:"Registration",path:"/registration"},
-    {name:"Login",path:"/auth"},
+    { name: "Home", path: "/" },
+    { name: "Services", path: "/service" },
+    { name: "Result", path: "/results" },
+    { name: "Admit Card", path: "/admit" },
+    { name: "Registration", path: "/registration" },
+    { name: "Login", path: "/auth" },
 ]
 
-const ResponsiveHeader= () => {
+const ResponsiveHeader = () => {
     const path = useLocation()
     const [anchorElNav, setAnchorElNav] = React.useState(null)
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const navigate = useNavigate()
-    const [user,setUser] = React.useState(null)
+    const [user, setUser] = React.useState(null)
 
-    React.useEffect(function(){
+    React.useEffect(function () {
         fetchUserData()
-    },[path?.pathname])
+    }, [path?.pathname])
 
-    function fetchUserData(){
+    function fetchUserData() {
         const user = GetCurrentUser()
-        if(!user){
+        if (!user) {
             setUser(null)
-        }else{
+        } else {
             setUser(user)
         }
     }
@@ -68,6 +69,9 @@ const ResponsiveHeader= () => {
         navigate(path)
         handleCloseNavMenu()
     }
+
+    const user_type = _.get(user, "meta_data.user_type", null)
+
 
     return (
         <AppBar position="static" sx={{ backgroundColor: "#1976d2" }}>
@@ -109,11 +113,17 @@ const ResponsiveHeader= () => {
                                 transformOrigin={{ vertical: "top", horizontal: "left" }}
                                 sx={{ display: { xs: "block", md: "none" } }}
                             >
-                                {(user ? routesList : publicRoutes).map((route) => (
-                                    <MenuItem key={route.name} onClick={() => handleNavigate(route.path)}>
-                                        <Typography textAlign="center">{route.name}</Typography>
-                                    </MenuItem>
-                                ))}
+                                {(user ? routesList : publicRoutes).map((route) => {
+                                    if (route.name === "Admin" && user_type != "owner") {
+                                        return null
+                                    }
+                                    if(route.name === "Setting" && user_type === "student") return null
+                                    return (
+                                        <MenuItem key={route.name} onClick={() => handleNavigate(route.path)}>
+                                            <Typography textAlign="center">{route.name}</Typography>
+                                        </MenuItem>
+                                    )
+                                })}
                             </Menu>
                         </Box>
                     )}
@@ -143,24 +153,32 @@ const ResponsiveHeader= () => {
                             justifyContent: "flex-end",
                         }}
                     >
-                        {(user ? routesList : publicRoutes).map((route) => (
-                            <Button
-                                key={route.name}
-                                onClick={() => handleNavigate(route.path)}
-                                sx={{ 
-                                    my: 2, 
-                                    color: "white", 
-                                    display: route.path.includes("auth") ? "flex" : "block",
-                                    border: route.path.includes("auth") && "2px solid #FFFF", 
-                                    justifyContent:"center",
-                                    alignItems:"center"
-                                }}
-                                variant="outlined"
-                                endIcon={route.path.includes("auth") && <Admin/>}
-                            >
-                                {route.name}
-                            </Button>
-                        ))}
+                        {(user ? routesList : publicRoutes).map((route) => {
+                            if (route.name === "Admin" && user_type != "owner") {
+                                return null
+                            }
+                            if(route.name === "Setting" && user_type === "student") return null
+                            return (
+                                (
+                                    <Button
+                                        key={route.name}
+                                        onClick={() => handleNavigate(route.path)}
+                                        sx={{
+                                            my: 2,
+                                            color: "white",
+                                            display: route.path.includes("auth") ? "flex" : "block",
+                                            border: route.path.includes("auth") && "2px solid #FFFF",
+                                            justifyContent: "center",
+                                            alignItems: "center"
+                                        }}
+                                        variant="outlined"
+                                        endIcon={route.path.includes("auth") && <Admin />}
+                                    >
+                                        {route.name}
+                                    </Button>
+                                )
+                            )
+                        })}
                     </Box>
                 </Toolbar>
             </Container>

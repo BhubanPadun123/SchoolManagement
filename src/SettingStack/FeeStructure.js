@@ -13,7 +13,8 @@ import {
 import {
     CloseOutlined,
     DeleteOutline,
-    EditOutlined
+    EditOutlined,
+    TodayOutlined
 } from "@mui/icons-material"
 import FeeStructureSidebar from "./components/FeeStructureSidebar"
 import AddFeeForm from "./components/FeeForm"
@@ -31,6 +32,7 @@ import {
     toaster
 } from "rsuite"
 import _ from "lodash"
+import { Others } from "@rsuite/icons"
 
 export default function PlatformFeeStructure() {
     const theme = useTheme()
@@ -46,6 +48,8 @@ export default function PlatformFeeStructure() {
         feeName: "",
         feeAmount: ""
     })
+    const [openMonthFeeModal, setOpenMonthlyFeeModal] = React.useState(false)
+    const [openOtherFeeModal, setOpenOtherFeeModal] = React.useState(false)
     const [editRef, setEditRef] = React.useState("")
     const [isEdit, setEdit] = React.useState(false)
     const [isDelete, setDelete] = React.useState(false)
@@ -57,6 +61,17 @@ export default function PlatformFeeStructure() {
     React.useEffect(() => {
         fetchPreData()
     }, [])
+    const isOwner = () => {
+        const user = GetCurrentUser()
+        if (!user) return false
+        const userType = _.get(user, "meta_data.user_type", null)
+        if (!userType) return false
+        if (userType === "admin") {
+            return true
+        } else {
+            return false
+        }
+    }
 
 
     function fetchPreData() {
@@ -109,40 +124,78 @@ export default function PlatformFeeStructure() {
         if (findClass) {
             let meta_data = _.get(findClass, "meta_data")
 
-            if (meta_data && meta_data.hasOwnProperty('feeStructure') && Array.isArray(meta_data.feeStructure)) {
-                let { feeStructure } = meta_data
-                let isFeeExist = feeStructure.find(i => i.feeName === feeName)
-                if (isFeeExist) {
-                    toaster.push(<Message type="info" >Fee already exist with name {feeName}</Message>, { placement: "topCenter" })
-                    return
-                }
-                meta_data = {
-                    ...meta_data,
-                    feeStructure: [
-                        ...feeStructure,
-                        {
+            if (openOtherFeeModal) {
+                if (meta_data && meta_data.hasOwnProperty('feeStructure') && Array.isArray(meta_data.feeStructure)) {
+                    let { feeStructure } = meta_data
+                    let isFeeExist = feeStructure.find(i => i.feeName === feeName)
+                    if (isFeeExist) {
+                        toaster.push(<Message type="info" >Fee already exist with name {feeName}</Message>, { placement: "topCenter" })
+                        return
+                    }
+                    meta_data = {
+                        ...meta_data,
+                        feeStructure: [
+                            ...feeStructure,
+                            {
 
-                            feeName: feeName,
-                            feeAmount: feeAmount
-                        }
-                    ]
+                                feeName: feeName,
+                                feeAmount: feeAmount
+                            }
+                        ]
+                    }
+                } else {
+                    meta_data = {
+                        ...meta_data,
+                        feeStructure: [
+                            {
+                                feeName: feeName,
+                                feeAmount: feeAmount
+                            }
+                        ]
+                    }
                 }
-            } else {
-                meta_data = {
-                    ...meta_data,
-                    feeStructure: [
-                        {
-                            feeName: feeName,
-                            feeAmount: feeAmount
-                        }
-                    ]
-                }
+
+                addFeeAction({
+                    class_id: findClass.id,
+                    meta_data: meta_data
+                })
             }
+            if (openMonthFeeModal) {
+                if (meta_data && meta_data.hasOwnProperty('monthlyFee') && Array.isArray(meta_data.monthlyFee)) {
+                    let { monthlyFee } = meta_data
+                    let isFeeExist = monthlyFee.find(i => i.feeName === feeName)
+                    if (isFeeExist) {
+                        toaster.push(<Message type="info" >Fee already exist with name {feeName}</Message>, { placement: "topCenter" })
+                        return
+                    }
+                    meta_data = {
+                        ...meta_data,
+                        monthlyFee: [
+                            ...monthlyFee,
+                            {
 
-            addFeeAction({
-                class_id: findClass.id,
-                meta_data: meta_data
-            })
+                                feeName: feeName,
+                                feeAmount: feeAmount
+                            }
+                        ]
+                    }
+                } else {
+                    meta_data = {
+                        ...meta_data,
+                        monthlyFee: [
+                            {
+                                feeName: feeName,
+                                feeAmount: feeAmount
+                            }
+                        ]
+                    }
+                }
+
+                addFeeAction({
+                    class_id: findClass.id,
+                    meta_data: meta_data
+                })
+            }
         }
     }
 
@@ -170,8 +223,9 @@ export default function PlatformFeeStructure() {
             const findClass = classes.find(i => i.class_name === currentClass)
             if (findClass) {
                 const feeStructure = _.get(findClass, "meta_data.feeStructure", [])
+                const monthlyFee = _.get(findClass,"meta_data.monthlyFee",[])
                 if (feeStructure && Array.isArray(feeStructure) && feeStructure.length > 0) {
-                    const list = feeStructure.map((item, index) => {
+                    const list = feeStructure.concat(monthlyFee).map((item, index) => {
                         return {
                             "Sl_No": index + 1,
                             "Fee_Name": item.feeName,
@@ -189,6 +243,10 @@ export default function PlatformFeeStructure() {
             return []
         }
     }, [currentClass, getPlatformClassState])
+
+
+    const isAdmit = isOwner()
+    const checkPermission = Array.isArray(roles) ? !roles.includes("Create Content") : true
 
 
 
@@ -213,25 +271,39 @@ export default function PlatformFeeStructure() {
                 flexGrow: 1,
                 rowGap: "8px"
             }}>
-                <Typography variant={isMobile ? "body1" : "h4"} sx={{
-                    color: "#FFFF",
-                    textAlign: "center",
-                    fontWeight: "bold",
-                    fontFamily: "Lato",
-                    textTransform: "capitalize"
-                }} >
-                    Fee Structure configuration for {currentClass}
-                </Typography>
-                <AddFeeForm
-                    isMobile={isMobile}
-                    roles={roles}
-                    onAdd={(feeName, feeAmount) => {
-                        updateFee(feeName, feeAmount)
-                    }}
-                />
-                <div style={{
-                    height: "8px"
-                }} />
+                <div className="col-md-12" style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    gap: "4px",
+                    alignItems: "center",
+                    padding: "8px"
+                }}>
+                    <Button
+                        variant="outlined"
+                        endIcon={
+                            <TodayOutlined />
+                        }
+                        size="small"
+                        onClick={() => {
+                            setOpenMonthlyFeeModal(!openMonthFeeModal)
+                        }}
+                    >
+                        Monthly Fee
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        endIcon={
+                            <Others />
+                        }
+                        size="small"
+                        onClick={() => {
+                            setOpenOtherFeeModal(!openOtherFeeModal)
+                        }}
+                    >
+                        Other Fee
+                    </Button>
+                </div>
                 <CTable
                     header={["SL_No", "Fee_Name", "Fee_Amount"]}
                     rows={feeData ? feeData : []}
@@ -249,7 +321,7 @@ export default function PlatformFeeStructure() {
                                     onClick={() => {
                                         setEdit(true)
                                     }}
-                                    disabled={Array.isArray(roles) ?  !roles.includes("Upload Content") : true}
+                                    disabled={isAdmit ? !isAdmit : checkPermission}
                                 >
                                     <EditOutlined />
                                 </IconButton>
@@ -259,7 +331,7 @@ export default function PlatformFeeStructure() {
                                     onClick={() => {
                                         setDelete(true)
                                     }}
-                                    disabled={Array.isArray(roles) ? !roles.includes("Delete Content") : true}
+                                    disabled={isAdmit ? !isAdmit : checkPermission}
                                 >
                                     <DeleteOutline />
                                 </IconButton>
@@ -268,6 +340,27 @@ export default function PlatformFeeStructure() {
                     }
                 />
             </div>
+            <Modal
+                open={openOtherFeeModal || openMonthFeeModal}
+                onClose={() => {
+                    setOpenOtherFeeModal(false)
+                    setOpenMonthlyFeeModal(false)
+                }}
+                sx={{
+                    width: "100%",
+                    height: "100%",
+                    justifyContent: "center",
+                    alignItems: "center"
+                }}
+            >
+                <AddFeeForm
+                    isMobile={isMobile}
+                    roles={roles}
+                    onAdd={(feeName, feeAmount) => {
+                        updateFee(feeName, feeAmount)
+                    }}
+                />
+            </Modal>
             <Modal
                 open={isEdit}
                 onClose={() => {
@@ -495,7 +588,7 @@ export default function PlatformFeeStructure() {
                     }}>
                         <Button
                             variant="contained"
-                            onClick={()=> {
+                            onClick={() => {
                                 if (Array.isArray(classes) && classes.length > 0 && currentClass) {
                                     const findClass = classes.find(i => i.class_name === currentClass)
                                     if (!findClass) return

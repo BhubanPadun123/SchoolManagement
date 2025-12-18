@@ -36,6 +36,7 @@ import {
 export default function Home() {
     const navigate = useNavigate()
     const [getClassesAction,getClassesState] = useLazyGetInstitutionClassesQuery()
+    const [user,setUser] = React.useState(null)
     useEffect(()=>{
         const checkUser=async()=>{
             const user = await localStorage.getItem("current_user")
@@ -44,6 +45,7 @@ export default function Home() {
             }else{
                 const userInfo = JSON.parse(user)
                 const {user_data} = userInfo
+                setUser(user_data)
                 const user_platform = _.get(user_data,"meta_data.user_platform",null)
                 user_platform && getClassesAction({
                     institution_ref:user_platform
@@ -61,11 +63,28 @@ export default function Home() {
         }
     },[getClassesState])
 
+    const user_type = user && _.get(user,"meta_data.user_type",null)
+
     return (
         <Container>
             <Content className="show-grid">
                 {
                     service_list.map((item, index) => {
+                        if(user_type && (
+                            user_type == "student"
+                        ) && (
+                            item.title === "Admission" ||
+                            item.title === "Exam Planning" ||
+                            item.title === "Exam Admit Card" ||
+                            item.title === "Monthly Fee" ||
+                            item.title === "Class Subject's" ||
+                            item.title === "Result Management" ||
+                            item.title === "Certificate Management" ||
+                            item.title === "Notice Management" ||
+                            item.title === "Test Report's" ||
+                            item.title === "Student Stats"
+                        ))return null
+
                         return (
                             <div className="service__items" key={index}>
                                 {item.icon}

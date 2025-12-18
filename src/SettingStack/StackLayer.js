@@ -2,7 +2,7 @@ import React,{
     useEffect
 } from 'react'
 
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate,useLocation } from 'react-router-dom'
 import "./root.css"
 import {
     Sidebar,
@@ -19,14 +19,15 @@ import CleanHandsIcon from '@mui/icons-material/CleanHands'
 
 const StackLayer = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     
 
     useEffect(()=>{
         const fetchUserData=()=>{
             navigate("platform")
         }
-        fetchUserData()
-    },[])
+        location && location.pathname === "/setting" && fetchUserData()
+    },[location.pathname])
 
     return (
         <div style={{
@@ -68,11 +69,11 @@ const StackLayer = () => {
                             to:"student_registration",
                             icon:<AddLinkOutlined/>
                         },
-                        {
-                            name:"Manage Employees",
-                            to:"employees",
-                            icon:<Attractions/>
-                        },
+                        // {
+                        //     name:"Manage Employees",
+                        //     to:"employees",
+                        //     icon:<Attractions/>
+                        // },
                         {
                             name:"Setting Platform Fee",
                             to:"fee_structure",

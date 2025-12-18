@@ -6,6 +6,8 @@ import {
     Divider,
     Button
 } from "@mui/material"
+import {GetCurrentUser} from "../../utils/hooks"
+import _ from "lodash"
 
 export default function AddFeeForm({
     isMobile = false,
@@ -14,6 +16,20 @@ export default function AddFeeForm({
 }) {
     const [feeName,setFeeName] = React.useState("")
     const [feeAmount,setFeeAmount] = React.useState("")
+    const isOwner = ()=> {
+        const user = GetCurrentUser()
+        if(!user) return false
+        const userType = _.get(user,"meta_data.user_type",null)
+        if(!userType) return false
+        if(userType === "admin"){
+            return true
+        }else{
+            return false
+        }
+    }
+    const isAdmit = isOwner()
+    const checkPermission = Array.isArray(roles) ? !roles.includes("Create Content") : true
+
     return (
         <div style={{
             width: "100%",
@@ -82,7 +98,7 @@ export default function AddFeeForm({
                             setFeeAmount("")
                             setFeeName("")
                         }}
-                        disabled = {Array.isArray(roles) ? !roles.includes("Create Content") : true}
+                        disabled = {isAdmit ? !isAdmit : checkPermission}
                     >
                         Add
                     </Button>

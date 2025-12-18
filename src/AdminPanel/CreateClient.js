@@ -13,51 +13,74 @@ import {
 import { Message, toaster } from "rsuite"
 import {
     useCreatePlatformMutation,
-    useLazyUseGetAllPlatformsListQuery
+    useLazyUseGetAllPlatformsListQuery,
+    useUpdateUserMetadataMutation,
+    useLazyGetPlatformUserListQuery
 } from "../Redux/actions/setting.action"
 import {
     useUserRegisterMutation
 } from "../Redux/actions/user.action"
-import {resetForm,updateFields} from "../Redux/actions/formValue.action"
-import { useDispatch,useSelector } from "react-redux"
+import { resetForm, updateFields } from "../Redux/actions/formValue.action"
+import { useDispatch, useSelector } from "react-redux"
 import _ from "lodash"
 
 export default function CreateClient() {
     const dispatch = useDispatch()
 
-    const [getAllPlatformAction,getAllPlatformState] = useLazyUseGetAllPlatformsListQuery()
-    const [createPlatformAction,createPlatformState] = useCreatePlatformMutation()
-    const [createUserAction,createUserState] = useUserRegisterMutation()
+    const [getAllPlatformAction, getAllPlatformState] = useLazyUseGetAllPlatformsListQuery()
+    const [createPlatformAction, createPlatformState] = useCreatePlatformMutation()
+    const [createUserAction, createUserState] = useUserRegisterMutation()
 
-    const form = useSelector((state)=> state.form.state)
 
-    React.useEffect(()=>{
+    const form = useSelector((state) => state.form.state)
+
+    React.useEffect(() => {
         getAllPlatformAction()
-    },[])
-    const platformList = React.useMemo(()=> {
-        if(getAllPlatformState.isSuccess){
-            const list = _.get(getAllPlatformState,"currentData.list",[])
+    }, [])
+    const platformList = React.useMemo(() => {
+        if (getAllPlatformState.isSuccess) {
+            const list = _.get(getAllPlatformState, "currentData.list", [])
             return list
-        }else{
+        } else {
             return []
         }
-    },[getAllPlatformState])
-    React.useMemo(()=> {
-        if(createPlatformState.isSuccess && createUserState.isSuccess){
-            let message = _.get(createPlatformState,"data.message","Platform Created success!")
-            toaster.push(<Message type="success">{message}</Message>,{placement:"topCenter"})
+    }, [getAllPlatformState])
+    React.useMemo(() => {
+        if (createPlatformState.isSuccess) {
+            let message = _.get(createPlatformState, "data.message", "Platform Created success!")
+            let platform = _.get(createPlatformState, "data.info", null)
+            toaster.push(<Message type="success">{message}</Message>, { placement: "topCenter" })
+            if (platform) {
+                let platform_id = _.get(platform, "id", null)
+                const user = _.get(form, "user", null)
+                if(!user) return
+                const email = _.get(user, "email", null)
+                const firstname = _.get(user, "firstname", null)
+                const lastname = _.get(user, "lastname", null)
+                const password = _.get(user, "password", null)
+                platform_id && createUserAction({
+                    firstname,
+                    lastname: lastname ? lastname : "",
+                    email,
+                    password,
+                    meta_data: {
+                        user_type: "admin",
+                        user_platform:platform_id
+                    }
+                })
+            }
             dispatch(resetForm())
             getAllPlatformAction()
             createPlatformState.reset()
             createUserState.reset()
         }
-        if(createPlatformState.isError || createUserState.isError){
-            toaster.push(<Message type="error">Error while create platform</Message>,{placement:"topCenter"})
+        if (createPlatformState.isError || createUserState.isError) {
+            toaster.push(<Message type="error">Error while create platform</Message>, { placement: "topCenter" })
             createPlatformState.reset()
             createUserState.reset()
         }
-    },[createPlatformState,createUserState])
-    console.log(createUserState,createPlatformState,"<----------")
+    }, [createPlatformState, createUserState])
+
     return (
         <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
             <Paper
@@ -81,17 +104,17 @@ export default function CreateClient() {
                     label="School / College Name"
                     placeholder="Enter Name"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let name = e.target.value
-                        let platform = _.get(form,"platform",{})
+                        let platform = _.get(form, "platform", {})
                         dispatch(updateFields({
-                            platform:{
+                            platform: {
                                 ...platform,
-                                name:name
+                                name: name
                             }
                         }))
                     }}
-                    value={_.get(form,"platform.name","")}
+                    value={_.get(form, "platform.name", "")}
                 />
 
                 {/* Contact Person */}
@@ -100,34 +123,34 @@ export default function CreateClient() {
                     label="Enter State Name"
                     placeholder="Enter State Name"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let state = e.target.value
-                        let platform = _.get(form,"platform",{})
+                        let platform = _.get(form, "platform", {})
                         dispatch(updateFields({
-                            platform:{
+                            platform: {
                                 ...platform,
-                                state:state
+                                state: state
                             }
                         }))
                     }}
-                    value={_.get(form,"platform.state","")}
+                    value={_.get(form, "platform.state", "")}
                 />
                 <TextField
                     fullWidth
                     label="Enter District Name"
                     placeholder="Enter District Name"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let district = e.target.value
-                        const platform = _.get(form,"platform",{})
+                        const platform = _.get(form, "platform", {})
                         dispatch(updateFields({
-                            platform:{
+                            platform: {
                                 ...platform,
-                                district:district
+                                district: district
                             }
                         }))
                     }}
-                    value={_.get(form,"platform.district","")}
+                    value={_.get(form, "platform.district", "")}
                 />
                 <TextField
                     fullWidth
@@ -135,34 +158,34 @@ export default function CreateClient() {
                     placeholder="Enter PinCode"
                     sx={{ mb: 3 }}
                     type="number"
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let pinCode = e.target.value
-                        const platform = _.get(form,"platform",{})
+                        const platform = _.get(form, "platform", {})
                         dispatch(updateFields({
-                            platform:{
+                            platform: {
                                 ...platform,
-                                pinCode:pinCode
+                                pinCode: pinCode
                             }
                         }))
                     }}
-                    value={_.get(form,"platform.pinCode","")}
+                    value={_.get(form, "platform.pinCode", "")}
                 />
                 <TextField
                     fullWidth
                     label="Enter Full Address"
                     placeholder="Enter Full Address"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let address = e.target.value
-                        const platform = _.get(form,"platform",{})
+                        const platform = _.get(form, "platform", {})
                         dispatch(updateFields({
-                            platform:{
+                            platform: {
                                 ...platform,
-                                address:address
+                                address: address
                             }
                         }))
                     }}
-                    value={_.get(form,"platform.address","")}
+                    value={_.get(form, "platform.address", "")}
                     multiline
                 />
 
@@ -179,34 +202,34 @@ export default function CreateClient() {
                     label="Enter First Name"
                     placeholder="Enter First Name"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let firstname = e.target.value
-                        const user = _.get(form,"user",{})
+                        const user = _.get(form, "user", {})
                         dispatch(updateFields({
-                            user:{
+                            user: {
                                 ...user,
-                                firstname:firstname
+                                firstname: firstname
                             }
                         }))
                     }}
-                    value={_.get(form,"user.firstname","")}
+                    value={_.get(form, "user.firstname", "")}
                 />
                 <TextField
                     fullWidth
                     label="Enter Last Name"
                     placeholder="Enter Last Name"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let lastname = e.target.value
-                        const user = _.get(form,"user",{})
+                        const user = _.get(form, "user", {})
                         dispatch(updateFields({
-                            user:{
+                            user: {
                                 ...user,
-                                lastname:lastname
+                                lastname: lastname
                             }
                         }))
                     }}
-                    value={_.get(form,"user.lastname","")}
+                    value={_.get(form, "user.lastname", "")}
                 />
                 <TextField
                     fullWidth
@@ -214,34 +237,34 @@ export default function CreateClient() {
                     placeholder="Enter Email Address"
                     sx={{ mb: 3 }}
                     type="email"
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let email = e.target.value
-                        const user = _.get(form,"user","")
+                        const user = _.get(form, "user", "")
                         dispatch(updateFields({
-                            user:{
+                            user: {
                                 ...user,
-                                email:email
+                                email: email
                             }
                         }))
                     }}
-                    value={_.get(form,"user.email","")}
+                    value={_.get(form, "user.email", "")}
                 />
                 <TextField
                     fullWidth
                     label="Enter Password"
                     placeholder="Enter Password"
                     sx={{ mb: 3 }}
-                    onChange={(e)=> {
+                    onChange={(e) => {
                         let password = e.target.value
-                        const user = _.get(form,"user",{})
+                        const user = _.get(form, "user", {})
                         dispatch(updateFields({
-                            user:{
+                            user: {
                                 ...user,
-                                password:password
+                                password: password
                             }
                         }))
                     }}
-                    value={_.get(form,"user.password","")}
+                    value={_.get(form, "user.password", "")}
                 />
 
                 {/* Button */}
@@ -256,25 +279,25 @@ export default function CreateClient() {
                             textTransform: "none",
                             fontSize: "16px",
                         }}
-                        onClick={()=> {
-                            const platform = _.get(form,"platform",null)
-                            const user = _.get(form,"user",null)
-                            if(!platform || !user) {
-                                toaster.push(<Message type="info" >Please fill all fields details</Message>,{placement:"topCenter"})
+                        onClick={() => {
+                            const platform = _.get(form, "platform", null)
+                            const user = _.get(form, "user", null)
+                            if (!platform || !user) {
+                                toaster.push(<Message type="info" >Please fill all fields details</Message>, { placement: "topCenter" })
                                 return
                             }
-                            const address = _.get(platform,"address",null)
-                            const district = _.get(platform,"district",null)
-                            const name = _.get(platform,"name",null)
-                            const pinCode = _.get(platform,"pinCode",null)
-                            const state = _.get(platform,"state",null)
+                            const address = _.get(platform, "address", null)
+                            const district = _.get(platform, "district", null)
+                            const name = _.get(platform, "name", null)
+                            const pinCode = _.get(platform, "pinCode", null)
+                            const state = _.get(platform, "state", null)
 
-                            const email = _.get(user,"email",null)
-                            const firstname = _.get(user,"firstname",null)
-                            const lastname = _.get(user,"lastname",null)
-                            const password = _.get(user,"password",null)
+                            const email = _.get(user, "email", null)
+                            const firstname = _.get(user, "firstname", null)
+                            const lastname = _.get(user, "lastname", null)
+                            const password = _.get(user, "password", null)
 
-                            if(
+                            if (
                                 !address ||
                                 !district ||
                                 !name ||
@@ -283,32 +306,32 @@ export default function CreateClient() {
                                 !email ||
                                 !firstname ||
                                 !password
-                            ){
-                                toaster.push(<Message type="info" >Please fill all fields details</Message>,{placement:"topCenter"})
+                            ) {
+                                toaster.push(<Message type="info" >Please fill all fields details</Message>, { placement: "topCenter" })
                                 return
                             }
-                            let checkPltform = Array.isArray(platformList) && platformList.length > 0 && platformList.find((item)=> item.name.toLowerCase() === name.toLowerCase())
-                            if(checkPltform){
-                                toaster.push(<Message type="info" >School Or College Name Already Exist!</Message>,{placement:"topCenter"})
+                            let checkPltform = Array.isArray(platformList) && platformList.length > 0 && platformList.find((item) => item.name.toLowerCase() === name.toLowerCase())
+                            if (checkPltform) {
+                                toaster.push(<Message type="info" >School Or College Name Already Exist!</Message>, { placement: "topCenter" })
                                 return
                             }
                             createPlatformAction({
                                 name,
-                                logo:"null",
+                                logo: "null",
                                 state,
                                 district,
-                                pin:pinCode,
+                                pin: pinCode,
                                 address
                             })
-                            createUserAction({
-                                firstname,
-                                lastname: lastname ? lastname : "",
-                                email,
-                                password,
-                                meta_data:{
-                                    user_type:"admit"
-                                }
-                            })
+                            // createUserAction({
+                            //     firstname,
+                            //     lastname: lastname ? lastname : "",
+                            //     email,
+                            //     password,
+                            //     meta_data: {
+                            //         user_type: "admit"
+                            //     }
+                            // })
                         }}
                     >
                         Add Client
@@ -319,7 +342,7 @@ export default function CreateClient() {
                 (
                     getAllPlatformState.isLoading ||
                     createPlatformState.isLoading ||
-                    createUserState.isLoading
+                    createUserState.isLoading 
                 ) && (
                     <Loader show={true} />
                 )

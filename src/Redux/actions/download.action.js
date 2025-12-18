@@ -41,6 +41,14 @@ export const downloadAction = createApi({
                 body:data,
                 responseHandler:(response)=> response.blob()
             })
+        }),
+        downloadRegistrationPdf:builder.mutation({
+            query:(data)=> ({
+                url:"/registration_response",
+                method:"POST",
+                body:data,
+                responseHandler:(response) => response.blob()
+            })
         })
     })
 })
@@ -49,5 +57,6 @@ export const {
     useLazyDownloadRegisterStudentsQuery,
     useDownloadAdmissionRecievedMutation,
     useDownloadAdmissionDocumentMutation,
-    useDownloadAdmitCardMutation
+    useDownloadAdmitCardMutation,
+    useDownloadRegistrationPdfMutation
 } = downloadAction

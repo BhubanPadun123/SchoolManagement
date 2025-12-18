@@ -17,6 +17,9 @@ export default function AdminRoot() {
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const navigate = useNavigate()
+    React.useEffect(()=>{
+        navigate("/admin/new")
+    },[])
     return (
         <div style={{
             // display:"flex",
@@ -28,6 +31,7 @@ export default function AdminRoot() {
                 display:"flex",
                 justifyContent:"flex-start",
                 alignItems:"flex-start",
+                padding:"8px"
             }}>
                 <Sidebar
                     headerTitle={"Admin Panel"}

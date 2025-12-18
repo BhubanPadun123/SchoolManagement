@@ -418,8 +418,14 @@ function PlatformSetup() {
     }, [uploadMetadataStatus])
 
     const uploadImageStatus = useMemo(() => {
-        if (uploadImageState.isSuccess) {
+        if (uploadImageState.isSuccess || !institution) {
+            let data = {
+                ...institution,
+                "logo":JSON.stringify(uploadImageState.data)
+            }
+            updateInstitutionAction({id:data.id,data:{...data}})
             setInstitution((prevState) => ({ ...prevState, logo: JSON.stringify(uploadImageState.data) }))
+            
             return {
                 show: true,
                 message: uploadImageState.data.message,
@@ -435,11 +441,11 @@ function PlatformSetup() {
         }
     }, [uploadImageState])
 
-    useEffect(()=>{
-        if(uploadImageStatus){
+    useEffect(() => {
+        if (uploadImageStatus) {
             setStatus(uploadImageStatus)
         }
-    },[uploadImageStatus])
+    }, [uploadImageStatus])
 
 
     return (
@@ -503,26 +509,28 @@ function PlatformSetup() {
                         <div className="form__group" style={{ marginBottom: 15 }}>
                             <Text style={{ color: "#FFF", fontSize: 14 }}>Upload Institute Logo</Text>
                             {
-                                institution.logo ? (
+                                institution.logo && (
                                     <img
                                         style={{
                                             height: "140px",
                                             width: "140px",
-                                            borderRadius:"8px"
+                                            borderRadius: "8px"
                                         }}
-                                        src={JSON.parse(institution.logo).url}
-                                    />
-                                ) : (
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0]
-                                            uploadImageAction({ file })
-                                        }}
+                                        src={JSON.parse(institution.logo)?.url}
                                     />
                                 )
                             }
+                            <div>
+                                <h3>Upload Logo</h3>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0]
+                                        uploadImageAction({ file })
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div className="form__group" style={{ marginBottom: 15 }}>
@@ -595,7 +603,7 @@ function PlatformSetup() {
                             }}
                             onClick={institutionBasicInfo && institutionBasicInfo.hasOwnProperty('api_data') && institutionBasicInfo.api_data === "true" ? updateInstition : handleCreatePlatform}
                         >
-                            {institutionBasicInfo && institutionBasicInfo.hasOwnProperty('api_data') && institutionBasicInfo.api_data ==="true" ? "UPDATE" : "SUBMIT"}
+                            {institutionBasicInfo && institutionBasicInfo.hasOwnProperty('api_data') && institutionBasicInfo.api_data === "true" ? "UPDATE" : "SUBMIT"}
                         </Button>
                     </Panel>
                 )
