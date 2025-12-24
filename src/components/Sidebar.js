@@ -38,7 +38,9 @@ const Sidebar = ({
     const drawerContent = (
         <Box sx={{ width: 250 }}>
             <Toolbar>
-                <Typography variant="h6" component="div">
+                <Typography variant="h6" component="div" sx={{
+                    color:"black"
+                }}>
                     {headerTitle ? headerTitle : "My App"}
                 </Typography>
             </Toolbar>
@@ -111,13 +113,13 @@ const Sidebar = ({
                 aria-label="open drawer"
                 onClick={toggleDrawer}
                 variant="outlined"
-                startIcon={<MenuIcon color='#FFFF' style={{ color: "#FFFF" }} />}
+                startIcon={<MenuIcon color='#945050ff' style={{ color: "#945050ff" }} />}
                 size='small'
             >
                 <Typography style={{
                     fontFamily: "Lato",
                     fontWeight: "bold",
-                    color: "#FFFF",
+                    color: "#945050ff",
                     textTransform: "uppercase"
                 }}>
                     Open Menu

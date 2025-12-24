@@ -9,14 +9,60 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material"
+import {
+    Sidebar,
+    Loader
+} from "../components/index"
+import {
+    useLazyGetInstitutionClassesQuery
+} from "../Redux/actions/classSetup.action"
+import {
+    GetCurrentUser
+} from "../utils/hooks"
+import _ from "lodash"
+import { useNavigate,Outlet } from "react-router-dom";
 
 import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
+import { ScheduleOutlined, SchoolOutlined } from "@mui/icons-material";
 
 export default function FeeRoot() {
-    const theme = useTheme();
-    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const theme = useTheme()
+    const navigate = useNavigate()
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"))
+
+    const [getClassesAction, getClassesState] = useLazyGetInstitutionClassesQuery()
+
+    function fetchPreData() {
+        const user = GetCurrentUser()
+        if (user) {
+            let user_platform = _.get(user, "meta_data.user_platform", null)
+            user_platform && getClassesAction({ institution_ref: user_platform })
+        } else {
+            navigate("/")
+        }
+    }
+    React.useEffect(() => {
+        fetchPreData()
+    }, [])
+
+    const classes = React.useMemo(() => {
+        if (getClassesState.isSuccess) {
+            const list = _.get(getClassesState, "currentData.list", [])
+            return list
+        } else {
+            return []
+        }
+    }, [getClassesState])
+
+    const classRoutesList = Array.isArray(classes) && classes.length > 0 && classes.map((item)=> {
+        return {
+            "name":item.class_name,
+            "to":item.class_name,
+            "icon":<SchoolOutlined/>
+        }
+    })
 
     return (
         <Box
@@ -40,15 +86,31 @@ export default function FeeRoot() {
                     Manage student fee records, generate invoices, track dues, and automate billing for your School or College.
                 </Typography>
 
-                <Box sx={{ mt: 4 }}>
-                    <Button
-                        variant="contained"
-                        size="large"
-                        sx={{ mr: 2, borderRadius: 3 }}
+                <Box sx={{
+                    mt: 4,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px"
+                }}>
+                    <div
+                        style={{
+                            marginRight: 2,
+                            borderRadius: 3,
+                            backgroundColor: "#FFFF"
+                        }}
                     >
-                        Start Managing
-                    </Button>
-                    <Button variant="outlined" size="large" sx={{ borderRadius: 3 }}>
+                        <Sidebar
+                            headerTitle={"Classes List"}
+                            defaultNav={classRoutesList && classRoutesList.length > 0 ? classRoutesList[0] : []}
+                            navList={classRoutesList ? classRoutesList : []}
+                            handleNav={(e)=> {
+                                navigate(e)
+                            }}
+                        />
+                    </div>
+                    <Button variant="outlined" size="small" sx={{ borderRadius: 1 }}>
                         View Reports
                     </Button>
                 </Box>
@@ -98,6 +160,16 @@ export default function FeeRoot() {
                     </Card>
                 </Grid>
             </Grid>
+            <Grid container spacing={3} justifyContent="center">
+                <Outlet/>
+            </Grid>
+            {
+                (
+                    getClassesState.isLoading
+                ) && (
+                    <Loader show={true} />
+                )
+            }
         </Box>
     );
 }

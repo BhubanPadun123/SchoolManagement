@@ -58,7 +58,8 @@ import {
     EditExamDetails
 } from "./Exam/index"
 import {
-    FeeRoot
+    FeeRoot,
+    FeeCollector
 } from "./FeeManager"
 
 export default function Routing() {
@@ -134,7 +135,9 @@ export default function Routing() {
                <Route path="manage" element={<ManageExamsPage/>} />
                <Route path=":examInfo" element={<EditExamDetails/>} />
             </Route>
-            <Route path="/fee" element={<FeeRoot/>} ></Route>
+            <Route path="/fee" element={<FeeRoot/>} >
+                <Route path=":class_name" element={<FeeCollector/>} />
+            </Route>
         </Routes>
     )
 }

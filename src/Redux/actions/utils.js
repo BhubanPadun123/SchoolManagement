@@ -6,5 +6,6 @@ export const api_service_path = {
     admission:"api/admission",
     user:"api/user",
     upload_content:"api/imageUpload",
-    download:"api/download"
+    download:"api/download",
+    feeCollection:"api/fee"
 }

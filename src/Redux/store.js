@@ -18,6 +18,9 @@ import {
 import {
     downloadAction
 } from "./actions/download.action"
+import {
+    feeCollectionAction
+} from "./actions/feeCollection.action"
 import formSlice from "./actions/formValue.action"
 
 
@@ -29,6 +32,7 @@ export const Store = configureStore({
         [admissionAction.reducerPath] : admissionAction.reducer,
         [uploadContentAction.reducerPath] : uploadContentAction.reducer,
         [downloadAction.reducerPath] : downloadAction.reducer,
+        [feeCollectionAction.reducerPath] : feeCollectionAction.reducer,
         // [formSlice.reducerPath] : formSlice.reducer,
 
         form:formSlice.reducer
@@ -40,7 +44,8 @@ export const Store = configureStore({
         concat(classRoomAction.middleware).
         concat(admissionAction.middleware).
         concat(uploadContentAction.middleware).
-        concat(downloadAction.middleware)
+        concat(downloadAction.middleware).
+        concat(feeCollectionAction.middleware)
 })
 
 
